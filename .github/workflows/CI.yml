@@ -17,7 +17,10 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions-rs/cargo@v1
         with:
-          command: build 
+          command: build
+      - uses: actions-rs/cargo@v1
+        with:
+          command: check
       - uses: actions-rs/cargo@v1
         with:
           command: test 
@@ -28,3 +31,6 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: clippy
+      - uses: actions-rs/cargo@v1
+        with:
+          command: audit
