@@ -1,4 +1,6 @@
 # Rust Driver for TB6612FNG Motor Driver
+[![CI](https://github.com/rursprung/tb6612fng-rs/actions/workflows/CI.yml/badge.svg)](https://github.com/rursprung/tb6612fng-rs/actions/workflows/CI.yml)
+
 This is a `no_std` driver for the [TB6612FNG motor driver](https://www.sparkfun.com/datasheets/Robotics/TB6612FNG.pdf) as can e.g. be found on the corresponding [SparkFun module](https://www.sparkfun.com/products/14450).
 
 Note that this work is not affiliated with any of the vendors of the controller or controller boards.
