@@ -13,11 +13,11 @@
 //! ## Optional features
 //! * `defmt`: you can enable the `defmt` feature to get a `defmt::debug!` call for every speed change.
 
-#![deny(unsafe_code)]
-#![deny(warnings)]
-#![deny(missing_docs)]
-#![deny(missing_debug_implementations)]
-#![deny(unused)]
+#![forbid(unsafe_code)]
+#![forbid(warnings)]
+#![forbid(missing_docs)]
+#![forbid(missing_debug_implementations)]
+#![forbid(unused)]
 #![no_std]
 
 #[cfg(feature = "defmt")]
