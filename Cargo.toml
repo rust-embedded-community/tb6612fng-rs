@@ -6,6 +6,7 @@ edition = "2021"
 description = "A `no_std` driver for the TB6612FNG motor driver."
 repository = "https://github.com/rursprung/tb6612fng-rs"
 keywords = ["tb6612fng", "embedded", "driver", "no_std", "motor", "dc motor", "controller"]
+license = "MIT"
 
 [dependencies]
 embedded-hal = "0.2"
