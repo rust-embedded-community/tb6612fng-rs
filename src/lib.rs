@@ -26,7 +26,7 @@ use embedded_hal::digital::v2::OutputPin;
 use embedded_hal::PwmPin;
 
 /// Defines errors which can happen while trying to set a speed.
-#[derive(PartialEq, Eq, Debug)]
+#[derive(PartialEq, Eq, Debug, Copy, Clone)]
 #[cfg_attr(feature = "defmt", derive(Format))]
 pub enum DriveError {
     /// An invalid speed has been defined. The speed must be given as a percentage value between 0 and 100 to be valid.
@@ -34,7 +34,7 @@ pub enum DriveError {
 }
 
 /// Defines the possible drive commands.
-#[derive(PartialEq, Eq, Debug)]
+#[derive(PartialEq, Eq, Debug, Copy, Clone)]
 #[cfg_attr(feature = "defmt", derive(Format))]
 pub enum DriveCommand {
     /// Drive forward with the defined speed (in percentage)
@@ -252,17 +252,32 @@ where
     }
 
     /// Get the currently active drive command.
+    ///
+    /// If you only want to know the speed consider calling [`Motor::current_speed`] instead.
     pub fn current_drive_command(&self) -> &DriveCommand {
         &self.current_drive_command
+    }
+
+    /// Return the current speed of the motor (in percentage). Note that driving forward returns a positive number
+    /// while driving backwards returns a negative number and both [`DriveCommand::Brake`] and [`DriveCommand::Stop`] return 0.
+    ///
+    /// If you need to know in more details what the current status is consider calling [`Motor::current_drive_command`] instead.
+    pub fn current_speed(&self) -> i8 {
+        match self.current_drive_command() {
+            DriveCommand::Forward(s) => *s as i8,
+            DriveCommand::Backwards(s) => -(*s as i8),
+            DriveCommand::Brake => 0,
+            DriveCommand::Stop => 0,
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{DriveError, Motor};
-    use embedded_hal_mock::pin::Mock as PinMock;
+    use crate::{DriveCommand, DriveError, Motor};
     use embedded_hal_mock::pin::State::{High, Low};
     use embedded_hal_mock::pin::Transaction as PinTransaction;
+    use embedded_hal_mock::pin::{Mock as PinMock, PwmDuty};
 
     #[test]
     fn test_motor_stop() {
@@ -281,6 +296,9 @@ mod tests {
         let mut motor = Motor::new(motor_in1, motor_in2, motor_pwm);
 
         motor.stop();
+
+        assert_eq!(*motor.current_drive_command(), DriveCommand::Stop);
+        assert_eq!(motor.current_speed(), 0);
     }
 
     #[test]
@@ -300,17 +318,21 @@ mod tests {
         let mut motor = Motor::new(motor_in1, motor_in2, motor_pwm);
 
         motor.brake();
+
+        assert_eq!(*motor.current_drive_command(), DriveCommand::Brake);
+        assert_eq!(motor.current_speed(), 0);
     }
 
     #[test]
     fn test_motor_drive_forward() {
         let max_duty = 100;
+        let speed: u8 = 100;
         let motor_in1_expectations = [PinTransaction::set(High)];
         let motor_in2_expectations = [PinTransaction::set(Low)];
         let motor_pwm_expectations = [
             PinTransaction::enable(),
             PinTransaction::get_max_duty(max_duty),
-            PinTransaction::set_duty(100),
+            PinTransaction::set_duty(speed as PwmDuty),
         ];
         let motor_in1 = PinMock::new(&motor_in1_expectations);
         let motor_in2 = PinMock::new(&motor_in2_expectations);
@@ -318,18 +340,22 @@ mod tests {
 
         let mut motor = Motor::new(motor_in1, motor_in2, motor_pwm);
 
-        motor.drive_forward(100).expect("speed can be set");
+        motor.drive_forward(speed).expect("speed can be set");
+
+        assert_eq!(*motor.current_drive_command(), DriveCommand::Forward(100));
+        assert_eq!(motor.current_speed(), speed as i8);
     }
 
     #[test]
     fn test_motor_drive_backwards() {
         let max_duty = 100;
+        let speed: u8 = 100;
         let motor_in1_expectations = [PinTransaction::set(Low)];
         let motor_in2_expectations = [PinTransaction::set(High)];
         let motor_pwm_expectations = [
             PinTransaction::enable(),
             PinTransaction::get_max_duty(max_duty),
-            PinTransaction::set_duty(100),
+            PinTransaction::set_duty(speed as PwmDuty),
         ];
         let motor_in1 = PinMock::new(&motor_in1_expectations);
         let motor_in2 = PinMock::new(&motor_in2_expectations);
@@ -337,7 +363,10 @@ mod tests {
 
         let mut motor = Motor::new(motor_in1, motor_in2, motor_pwm);
 
-        motor.drive_backwards(100).expect("speed can be set");
+        motor.drive_backwards(speed).expect("speed can be set");
+
+        assert_eq!(*motor.current_drive_command(), DriveCommand::Backwards(100));
+        assert_eq!(motor.current_speed(), -(speed as i8));
     }
 
     #[test]
@@ -356,11 +385,18 @@ mod tests {
 
         let mut motor = Motor::new(motor_in1, motor_in2, motor_pwm);
 
+        let current_drive_command = motor.current_drive_command().clone();
+        let current_speed = motor.current_speed();
+
         assert_eq!(
             motor
                 .drive_forward(101)
                 .expect_err("Invalid speed must result in an exception"),
             DriveError::InvalidSpeed
         );
+
+        // this should still be what was set before the invalid command
+        assert_eq!(*motor.current_drive_command(), current_drive_command);
+        assert_eq!(motor.current_speed(), current_speed);
     }
 }
