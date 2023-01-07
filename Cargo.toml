@@ -7,7 +7,7 @@ rust-version = "1.60"
 description = "A `no_std` driver for the TB6612FNG motor driver."
 repository = "https://github.com/rursprung/tb6612fng-rs"
 categories = ["embedded", "hardware-support", "no-std"]
-keywords = ["tb6612fng", "driver", "motor", "dc motor", "controller"]
+keywords = ["tb6612fng", "driver", "motor", "dc-motor", "controller"]
 license = "MIT OR Apache-2.0"
 
 [dependencies]
