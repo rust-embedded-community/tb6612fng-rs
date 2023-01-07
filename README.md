@@ -23,6 +23,9 @@ See the documentation for usage examples.
 ## Optional features
 * `defmt`: you can enable the [`defmt`](https://defmt.ferrous-systems.com/) feature to get a `defmt::debug!` call for every speed change.
 
+## Changelog
+For the changelog please see the dedicated [CHANGELOG.md](CHANGELOG.md).
+
 ## Minimum Supported Rust Version (MSRV)
 This crate is guaranteed to compile on stable Rust 1.60 and up. It *might*
 compile with older versions but that may change in any new patch release.
