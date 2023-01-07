@@ -14,4 +14,4 @@ embedded-hal = "0.2"
 defmt = { version = "0.3", optional = true }
 
 [dev-dependencies]
-embedded-hal-mock = { git = "https://github.com/rursprung/embedded-hal-mock.git", branch = "add-pwmpin-mock" }
+embedded-hal-mock = "0.9"
