@@ -11,7 +11,7 @@
 //! * You plan on using a single motor without the standby feature: use [`Motor`]
 //!
 //! ## Optional features
-//! * `defmt`: you can enable the `defmt` feature to get a `defmt::debug!` call for every speed change.
+//! * `defmt`: you can enable the `defmt` feature to get a `defmt::Format` implementation for all structs & enums in this crate and a `defmt::debug` call for every speed change.
 
 #![forbid(unsafe_code)]
 #![forbid(warnings)]
@@ -121,7 +121,7 @@ where
     /// Enable standby. This ignores any other setting currently done on the motors and puts them into standby.
     ///
     /// Note that this does not change any commands on the motors, i.e. the PWM signal will continue
-    /// and once [`disable_standby`] is called the motor will pick up where it left off (unless the command was changed in-between).
+    /// and once [`Tb6612fng::disable_standby`] is called the motor will pick up where it left off (unless the command was changed in-between).
     pub fn enable_standby(&mut self) {
         self.standby.set_low().ok();
     }
