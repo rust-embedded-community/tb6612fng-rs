@@ -24,7 +24,7 @@ See the documentation for usage examples.
 * `defmt`: you can enable the [`defmt`](https://defmt.ferrous-systems.com/) feature to get a `defmt::debug!` call for every speed change.
 
 ## Examples
-An simple example for the STM32F4 microcontrollers is [available](examples/stm32f4-single-motor-example/README.md).
+A simple example for the STM32F4 microcontrollers is [available](examples/stm32f4-single-motor-example/README.md).
 
 ## Changelog
 For the changelog please see the dedicated [CHANGELOG.md](CHANGELOG.md).
