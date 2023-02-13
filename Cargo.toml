@@ -6,7 +6,7 @@ rust-version = "1.60"
 
 description = "A `no_std` driver for the TB6612FNG motor driver."
 repository = "https://github.com/rursprung/tb6612fng-rs"
-categories = ["embedded", "hardware-support", "no-std"]
+categories = ["embedded", "hardware-support", "no-std", "no-std::no-alloc"]
 keywords = ["tb6612fng", "driver", "motor", "controller", "embedded-hal-driver"]
 license = "MIT OR Apache-2.0"
 
