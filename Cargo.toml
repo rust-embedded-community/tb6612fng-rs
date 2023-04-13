@@ -2,7 +2,7 @@
 name = "tb6612fng"
 version = "0.1.0"
 edition = "2021"
-rust-version = "1.60"
+rust-version = "1.62"
 
 description = "A `no_std` driver for the TB6612FNG motor driver."
 repository = "https://github.com/rursprung/tb6612fng-rs"
