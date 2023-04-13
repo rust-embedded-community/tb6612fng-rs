@@ -34,5 +34,5 @@ This crate is already stable, however it's based on a 0.x version of [`embedded-
 See [the tracking issue](https://github.com/rursprung/tb6612fng-rs/issues/4) for the roadmap to v1.0.0.
 
 ## Minimum Supported Rust Version (MSRV)
-This crate is guaranteed to compile on stable Rust 1.60 and up. It *might*
+This crate is guaranteed to compile on stable Rust 1.62 and up. It *might*
 compile with older versions but that may change in any new patch release.

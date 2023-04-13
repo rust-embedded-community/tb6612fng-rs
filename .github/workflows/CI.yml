@@ -10,7 +10,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        rust: [1.60.0, stable]
+        rust: [1.62.0, stable]
         features: ['', '--all-features']
     runs-on: ubuntu-latest
     steps:
