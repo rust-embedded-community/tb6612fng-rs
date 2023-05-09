@@ -13,10 +13,8 @@ use defmt_rtt as _;
 #[rtic::app(device = stm32f4xx_hal::pac, dispatchers = [EXTI1])]
 mod app {
     use stm32f4xx_hal::gpio::{Edge, Input, Output, PB4, PB5, PC13};
-    use stm32f4xx_hal::timer::PwmChannel;
-    use stm32f4xx_hal::{
-        pac, pac::TIM2, prelude::*, timer::MonoTimerUs, watchdog::IndependentWatchdog,
-    };
+    use stm32f4xx_hal::timer::{Channel3, MonoTimerUs, PwmChannel};
+    use stm32f4xx_hal::{pac, pac::TIM2, prelude::*, watchdog::IndependentWatchdog};
     use tb6612fng::{DriveCommand, Motor};
 
     #[monotonic(binds = TIM5, default = true)]
@@ -51,7 +49,7 @@ mod app {
         let motor_pwm = ctx
             .device
             .TIM2
-            .pwm_hz(gpiob.pb10.into_alternate(), 100.kHz(), &clocks)
+            .pwm_hz(Channel3::new(gpiob.pb10), 100.kHz(), &clocks)
             .split();
         let mut motor = Motor::new(motor_in1, motor_in2, motor_pwm);
         motor.drive_backwards(0).expect("");
@@ -84,7 +82,7 @@ mod app {
     }
 
     /// Feed the watchdog to avoid hardware reset.
-    #[task(priority=1, local=[watchdog])]
+    #[task(priority = 1, local = [watchdog])]
     fn periodic(ctx: periodic::Context) {
         defmt::trace!("feeding the watchdog!");
         ctx.local.watchdog.feed();
@@ -92,7 +90,7 @@ mod app {
     }
 
     /// Increase/decrease the motor speed every 100ms by 1% (iterates from 100% forward to 100% backwards)
-    #[task(priority=1, local=[motor_ramp_direction], shared=[motor])]
+    #[task(priority = 1, local = [motor_ramp_direction], shared = [motor])]
     fn update_motor_speed(mut ctx: update_motor_speed::Context) {
         ctx.shared.motor.lock(|motor| {
             let motor_ramp_direction = ctx.local.motor_ramp_direction;
