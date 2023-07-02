@@ -4,18 +4,24 @@ version = "0.1.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 
+[features]
+default = [ "hal_v02" ]
+hal_v02 = [ "tb6612fng/hal_v02" ]
+hal_v1 = [ "tb6612fng/hal_v1" ]
+
 [dependencies]
 cortex-m = { version = "0.7", features = ["critical-section-single-core"]}
 cortex-m-rtic = "1.1.4"
 panic-probe = { version = "0.3", features = ["print-defmt"] }
 
-stm32f4xx-hal = { version = "0.16.1", features = ["stm32f401", "rtic", "rtic-monotonic"] }
+# TODO: switch back to release version once it exists
+stm32f4xx-hal = { git = "https://github.com/stm32-rs/stm32f4xx-hal.git", rev = "552a9c5", features = ["stm32f401", "rtic", "rtic-monotonic"] }
 
 defmt = "0.3.5"
 defmt-rtt = "0.4"
 
 # use `tb6612fng = "0.1"` in reality; path used here to ensure that the example always compiles against the latest master
-tb6612fng = { path = "../.." }
+tb6612fng = { path = "../..", default-features = false, features = ["defmt"] }
 
 [profile.release]
 codegen-units = 1

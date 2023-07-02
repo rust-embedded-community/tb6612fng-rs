@@ -51,6 +51,10 @@ mod app {
             .TIM2
             .pwm_hz(Channel3::new(gpiob.pb10), 100.kHz(), &clocks)
             .split();
+        #[cfg(feature = "hal_v1")]
+        let mut motor_pwm = motor_pwm;
+        #[cfg(feature = "hal_v1")]
+        motor_pwm.enable();
         let mut motor = Motor::new(motor_in1, motor_in2, motor_pwm);
         motor.drive_backwards(0).expect("");
 

@@ -11,7 +11,7 @@ jobs:
       fail-fast: false
       matrix:
         rust: [1.62.0, stable]
-        features: ['', '--all-features']
+        features: ['', '--features defmt', '--no-default-features --features hal_v1', '--no-default-features --features defmt,hal_v1']
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -34,6 +34,10 @@ jobs:
         run: cargo audit
 
   stm32f4-single-motor-example:
+    strategy:
+      fail-fast: false
+      matrix:
+        features: ['', '--no-default-features --features hal_v1']
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -45,17 +49,17 @@ jobs:
       - name: Install flip-link
         run: cargo install flip-link
       - name: build
-        run: cargo build
+        run: cargo build ${{ matrix.features }}
         working-directory: examples/stm32f4-single-motor-example
       - name: check
-        run: cargo check
+        run: cargo check ${{ matrix.features }}
         working-directory: examples/stm32f4-single-motor-example
       # no tests available for now => no test step as it'd fail otherwise
       - name: check formatting
         run: cargo fmt --all -- --check
         working-directory: examples/stm32f4-single-motor-example
       - name: clippy
-        run: cargo clippy
+        run: cargo clippy ${{ matrix.features }}
         working-directory: examples/stm32f4-single-motor-example
       - name: audit
         run: cargo audit

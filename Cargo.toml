@@ -11,9 +11,16 @@ keywords = ["tb6612fng", "driver", "motor", "controller", "embedded-hal-driver"]
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-embedded-hal = "0.2"
+embedded-hal = { version = "0.2", optional = true }
+embedded-hal-one = { package = "embedded-hal", version = "=1.0.0-alpha.11", optional = true }
 
 defmt = { version = "0.3", optional = true }
 
 [dev-dependencies]
-embedded-hal-mock = "0.9"
+embedded-hal-mock = { version = "0.9" }
+embedded-hal-mock-one = { package = "embedded-hal-mock", git = "https://github.com/rursprung/embedded-hal-mock.git", branch = "add-SetDutyCycle-to-1-alpha-a11" }
+
+[features]
+default = ["hal_v02"]
+hal_v02 = ["dep:embedded-hal"]
+hal_v1 = ["dep:embedded-hal-one"]

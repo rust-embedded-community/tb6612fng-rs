@@ -20,6 +20,11 @@ See the documentation for usage examples.
 * You plan on using a single motor with the standby feature: use `Motor` and control the standby pin manually
 * You plan on using a single motor without the standby feature: use `Motor`
 
+## `embedded-hal`: `v0.2` vs. `v1.0.0-alpha.*`
+This crate can be used both with `embedded-hal` `v0.2` versions as well as `v1.0.0` pre-releases.
+By default, the `v0.2` support is being compiled, but you can switch to the `v1.0.0` pre-release by disabling the
+default features and instead enabling the optional `hal-v1`.
+
 ## Optional features
 * `defmt`: you can enable the [`defmt`](https://defmt.ferrous-systems.com/) feature to get a `defmt::debug!` call for every speed change.
 

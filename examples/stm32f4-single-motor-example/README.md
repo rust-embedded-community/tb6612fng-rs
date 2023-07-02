@@ -29,3 +29,5 @@ to stop (coast, first press), actively brake (second press) and drive again (thi
 1. Connect the board via USB
 2. Run `cargo run` (the correct chip & target is already defined in `Cargo.toml` and `.cargo/config`)
 3. Enjoy your running program :)
+
+To instead compile & run this with `embedded-hal` v1.0.0 pre-release support you can build it with `cargo run --no-default-features --features hal_v1`.
