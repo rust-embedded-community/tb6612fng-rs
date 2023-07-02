@@ -346,16 +346,20 @@ mod tests {
             PwmTransaction::get_max_duty_cycle(max_duty),
             PwmTransaction::set_duty_cycle(0),
         ];
-        let motor_in1 = PinMock::new(&motor_in1_expectations);
-        let motor_in2 = PinMock::new(&motor_in2_expectations);
-        let motor_pwm = PwmMock::new(&motor_pwm_expectations);
+        let mut motor_in1 = PinMock::new(&motor_in1_expectations);
+        let mut motor_in2 = PinMock::new(&motor_in2_expectations);
+        let mut motor_pwm = PwmMock::new(&motor_pwm_expectations);
 
-        let mut motor = Motor::new(motor_in1, motor_in2, motor_pwm);
+        let mut motor = Motor::new(motor_in1.clone(), motor_in2.clone(), motor_pwm.clone());
 
         motor.stop();
 
         assert_eq!(*motor.current_drive_command(), DriveCommand::Stop);
         assert_eq!(motor.current_speed(), 0);
+
+        motor_in1.done();
+        motor_in2.done();
+        motor_pwm.done();
     }
 
     #[test]
@@ -374,16 +378,20 @@ mod tests {
             PwmTransaction::get_max_duty_cycle(max_duty),
             PwmTransaction::set_duty_cycle(0),
         ];
-        let motor_in1 = PinMock::new(&motor_in1_expectations);
-        let motor_in2 = PinMock::new(&motor_in2_expectations);
-        let motor_pwm = PwmMock::new(&motor_pwm_expectations);
+        let mut motor_in1 = PinMock::new(&motor_in1_expectations);
+        let mut motor_in2 = PinMock::new(&motor_in2_expectations);
+        let mut motor_pwm = PwmMock::new(&motor_pwm_expectations);
 
-        let mut motor = Motor::new(motor_in1, motor_in2, motor_pwm);
+        let mut motor = Motor::new(motor_in1.clone(), motor_in2.clone(), motor_pwm.clone());
 
         motor.brake();
 
         assert_eq!(*motor.current_drive_command(), DriveCommand::Brake);
         assert_eq!(motor.current_speed(), 0);
+
+        motor_in1.done();
+        motor_in2.done();
+        motor_pwm.done();
     }
 
     #[test]
@@ -403,16 +411,20 @@ mod tests {
             PwmTransaction::get_max_duty_cycle(max_duty),
             PwmTransaction::set_duty_cycle(speed as u16),
         ];
-        let motor_in1 = PinMock::new(&motor_in1_expectations);
-        let motor_in2 = PinMock::new(&motor_in2_expectations);
-        let motor_pwm = PwmMock::new(&motor_pwm_expectations);
+        let mut motor_in1 = PinMock::new(&motor_in1_expectations);
+        let mut motor_in2 = PinMock::new(&motor_in2_expectations);
+        let mut motor_pwm = PwmMock::new(&motor_pwm_expectations);
 
-        let mut motor = Motor::new(motor_in1, motor_in2, motor_pwm);
+        let mut motor = Motor::new(motor_in1.clone(), motor_in2.clone(), motor_pwm.clone());
 
         motor.drive_forward(speed).expect("speed can be set");
 
         assert_eq!(*motor.current_drive_command(), DriveCommand::Forward(100));
         assert_eq!(motor.current_speed(), speed as i8);
+
+        motor_in1.done();
+        motor_in2.done();
+        motor_pwm.done();
     }
 
     #[test]
@@ -432,39 +444,35 @@ mod tests {
             PwmTransaction::get_max_duty_cycle(max_duty),
             PwmTransaction::set_duty_cycle(speed as u16),
         ];
-        let motor_in1 = PinMock::new(&motor_in1_expectations);
-        let motor_in2 = PinMock::new(&motor_in2_expectations);
-        let motor_pwm = PwmMock::new(&motor_pwm_expectations);
+        let mut motor_in1 = PinMock::new(&motor_in1_expectations);
+        let mut motor_in2 = PinMock::new(&motor_in2_expectations);
+        let mut motor_pwm = PwmMock::new(&motor_pwm_expectations);
 
-        let mut motor = Motor::new(motor_in1, motor_in2, motor_pwm);
+        let mut motor = Motor::new(motor_in1.clone(), motor_in2.clone(), motor_pwm.clone());
 
         motor.drive_backwards(speed).expect("speed can be set");
 
         assert_eq!(*motor.current_drive_command(), DriveCommand::Backwards(100));
         assert_eq!(motor.current_speed(), -(speed as i8));
+
+        motor_in1.done();
+        motor_in2.done();
+        motor_pwm.done();
     }
 
     #[test]
     fn test_motor_drive_invalid_speed() {
-        let max_duty = 100;
-        let motor_in1_expectations = [PinTransaction::set(Low)];
-        let motor_in2_expectations = [PinTransaction::set(High)];
+        let motor_in1_expectations = [];
+        let motor_in2_expectations = [];
         #[cfg(feature = "hal_v02")]
-        let motor_pwm_expectations = [
-            PinTransaction::enable(),
-            PinTransaction::get_max_duty(max_duty),
-            PinTransaction::set_duty(100),
-        ];
+        let motor_pwm_expectations = [PinTransaction::enable()];
         #[cfg(feature = "hal_v1")]
-        let motor_pwm_expectations = [
-            PwmTransaction::get_max_duty_cycle(max_duty),
-            PwmTransaction::set_duty_cycle(100),
-        ];
-        let motor_in1 = PinMock::new(&motor_in1_expectations);
-        let motor_in2 = PinMock::new(&motor_in2_expectations);
-        let motor_pwm = PwmMock::new(&motor_pwm_expectations);
+        let motor_pwm_expectations = [];
+        let mut motor_in1 = PinMock::new(&motor_in1_expectations);
+        let mut motor_in2 = PinMock::new(&motor_in2_expectations);
+        let mut motor_pwm = PwmMock::new(&motor_pwm_expectations);
 
-        let mut motor = Motor::new(motor_in1, motor_in2, motor_pwm);
+        let mut motor = Motor::new(motor_in1.clone(), motor_in2.clone(), motor_pwm.clone());
 
         let current_drive_command = motor.current_drive_command().clone();
         let current_speed = motor.current_speed();
@@ -479,5 +487,9 @@ mod tests {
         // this should still be what was set before the invalid command
         assert_eq!(*motor.current_drive_command(), current_drive_command);
         assert_eq!(motor.current_speed(), current_speed);
+
+        motor_in1.done();
+        motor_in2.done();
+        motor_pwm.done();
     }
 }
