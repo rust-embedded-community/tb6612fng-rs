@@ -10,6 +10,8 @@ board but should work on any STM32F4xx family microcontroller as long as the con
 * `AI2` on `PB4`
 * `PWMA` on `PB10`
 
+Don't forget to pull the `STBY` pin high, otherwise nothing will happen!
+
 Furthermore, the example uses a button connected on `PC13` which is e.g. present on the mentioned board.
 
 The example continuously cycles through all speeds from full backwards to full forward (in 1% steps) and the button can be used
