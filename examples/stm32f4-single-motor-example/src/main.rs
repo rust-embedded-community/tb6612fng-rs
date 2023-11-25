@@ -46,11 +46,12 @@ mod app {
         // set up the motor
         let motor_in1 = gpiob.pb5.into_push_pull_output();
         let motor_in2 = gpiob.pb4.into_push_pull_output();
-        let motor_pwm = ctx
+        let mut motor_pwm = ctx
             .device
             .TIM2
             .pwm_hz(Channel3::new(gpiob.pb10), 100.kHz(), &clocks)
             .split();
+        motor_pwm.enable();
         let mut motor = Motor::new(motor_in1, motor_in2, motor_pwm);
         motor.drive_backwards(0).expect("");
 

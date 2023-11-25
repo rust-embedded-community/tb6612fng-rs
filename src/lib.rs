@@ -22,8 +22,8 @@
 
 #[cfg(feature = "defmt")]
 use defmt::Format;
-use embedded_hal::digital::v2::OutputPin;
-use embedded_hal::PwmPin;
+use embedded_hal::digital::OutputPin;
+use embedded_hal::pwm::SetDutyCycle;
 
 /// Defines errors which can happen while trying to set a speed.
 #[derive(PartialEq, Eq, Debug, Copy, Clone)]
@@ -67,10 +67,10 @@ impl<MAIN1, MAIN2, MAPWM, MBIN1, MBIN2, MBPWM, STBY>
 where
     MAIN1: OutputPin,
     MAIN2: OutputPin,
-    MAPWM: PwmPin<Duty = u16>,
+    MAPWM: SetDutyCycle,
     MBIN1: OutputPin,
     MBIN2: OutputPin,
-    MBPWM: PwmPin<Duty = u16>,
+    MBPWM: SetDutyCycle,
     STBY: OutputPin,
 {
     /// Instantiate a new [`Tb6612fng`] with the defined pins.
@@ -79,19 +79,19 @@ where
     ///
     /// Usage example:
     /// ```
-    /// # use embedded_hal_mock::eh0::pin::Mock as PinMock;
-    /// # use embedded_hal_mock::eh0::pin::Transaction as PinTransaction;
+    /// # use embedded_hal_mock::eh1::pin::Mock as PinMock;
+    /// # use embedded_hal_mock::eh1::pwm::Mock as PwmMock;
     /// # let motor_a_in1 = PinMock::new([]);
     /// # let mut motor_a_in1_ = motor_a_in1.clone();
     /// # let motor_a_in2 = PinMock::new([]);
     /// # let mut motor_a_in2_ = motor_a_in2.clone();
-    /// # let motor_a_pwm = PinMock::new(&[PinTransaction::enable()]);
+    /// # let motor_a_pwm = PwmMock::new(&[]);
     /// # let mut motor_a_pwm_ = motor_a_pwm.clone();
     /// # let motor_b_in1 = PinMock::new([]);
     /// # let mut motor_b_in1_ = motor_b_in1.clone();
     /// # let motor_b_in2 = PinMock::new([]);
     /// # let mut motor_b_in2_ = motor_b_in2.clone();
-    /// # let motor_b_pwm = PinMock::new(&[PinTransaction::enable()]);
+    /// # let motor_b_pwm = PwmMock::new(&[]);
     /// # let mut motor_b_pwm_ = motor_b_pwm.clone();
     /// # let standby = PinMock::new([]);
     /// # let mut standby_ = standby.clone();
@@ -161,7 +161,7 @@ impl<IN1, IN2, PWM> Motor<IN1, IN2, PWM>
 where
     IN1: OutputPin,
     IN2: OutputPin,
-    PWM: PwmPin<Duty = u16>,
+    PWM: SetDutyCycle,
 {
     /// Instantiate a new [`Motor`] with the defined pins.
     /// This also automatically enables the PWM pin.
@@ -169,13 +169,14 @@ where
     ///
     /// Usage example:
     /// ```
-    /// # use embedded_hal_mock::eh0::pin::Mock as PinMock;
-    /// # use embedded_hal_mock::eh0::pin::Transaction as PinTransaction;
+    /// # use embedded_hal_mock::eh1::pin::Mock as PinMock;
+    /// # use embedded_hal_mock::eh1::pwm::Mock as PwmMock;
+    /// # use embedded_hal_mock::eh1::pin::Transaction as PinTransaction;
     /// # let motor_in1 = PinMock::new([]);
     /// # let mut motor_in1_ = motor_in1.clone();
     /// # let motor_in2 = PinMock::new([]);
     /// # let mut motor_in2_ = motor_in2.clone();
-    /// # let motor_pwm = PinMock::new(&[PinTransaction::enable()]);
+    /// # let motor_pwm = PwmMock::new([]);
     /// # let mut motor_pwm_ = motor_pwm.clone();
     /// use tb6612fng::Motor;
     ///
@@ -189,8 +190,7 @@ where
     /// # motor_in2_.done();
     /// # motor_pwm_.done();
     /// ```
-    pub fn new(in1: IN1, in2: IN2, mut pwm: PWM) -> Motor<IN1, IN2, PWM> {
-        pwm.enable();
+    pub fn new(in1: IN1, in2: IN2, pwm: PWM) -> Motor<IN1, IN2, PWM> {
         Motor {
             in1,
             in2,
@@ -251,19 +251,12 @@ where
             }
         }
 
-        let max_duty = self.pwm.get_max_duty();
-
-        let duty = (speed as f32 * (max_duty as f32 / 100.0)) as u16; // speed given in percentage
-
         #[cfg(feature = "defmt")]
-        defmt::debug!(
-            "driving {} with duty {} (max duty: {})",
-            drive_command,
-            duty,
-            max_duty
-        );
+        defmt::debug!("driving {} with speed {}", drive_command, speed);
 
-        self.pwm.set_duty(duty);
+        self.pwm
+            .set_duty_cycle_percent(speed)
+            .map_err(|_| DriveError::InvalidSpeed)?;
 
         self.current_drive_command = drive_command;
 
@@ -294,9 +287,11 @@ where
 #[cfg(test)]
 mod tests {
     use crate::{DriveCommand, DriveError, Motor};
-    use embedded_hal_mock::eh0::pin::State::{High, Low};
-    use embedded_hal_mock::eh0::pin::Transaction as PinTransaction;
-    use embedded_hal_mock::eh0::pin::{Mock as PinMock, PwmDuty};
+    use embedded_hal_mock::eh1::pin::Mock as PinMock;
+    use embedded_hal_mock::eh1::pin::State::{High, Low};
+    use embedded_hal_mock::eh1::pin::Transaction as PinTransaction;
+    use embedded_hal_mock::eh1::pwm::Mock as PwmMock;
+    use embedded_hal_mock::eh1::pwm::Transaction as PwmTransaction;
 
     #[test]
     fn test_motor_stop() {
@@ -304,13 +299,12 @@ mod tests {
         let motor_in1_expectations = [PinTransaction::set(Low)];
         let motor_in2_expectations = [PinTransaction::set(Low)];
         let motor_pwm_expectations = [
-            PinTransaction::enable(),
-            PinTransaction::get_max_duty(max_duty),
-            PinTransaction::set_duty(0),
+            PwmTransaction::get_max_duty_cycle(max_duty),
+            PwmTransaction::set_duty_cycle(0),
         ];
         let mut motor_in1 = PinMock::new(&motor_in1_expectations);
         let mut motor_in2 = PinMock::new(&motor_in2_expectations);
-        let mut motor_pwm = PinMock::new(&motor_pwm_expectations);
+        let mut motor_pwm = PwmMock::new(&motor_pwm_expectations);
 
         let mut motor = Motor::new(motor_in1.clone(), motor_in2.clone(), motor_pwm.clone());
 
@@ -330,13 +324,12 @@ mod tests {
         let motor_in1_expectations = [PinTransaction::set(High)];
         let motor_in2_expectations = [PinTransaction::set(High)];
         let motor_pwm_expectations = [
-            PinTransaction::enable(),
-            PinTransaction::get_max_duty(max_duty),
-            PinTransaction::set_duty(0),
+            PwmTransaction::get_max_duty_cycle(max_duty),
+            PwmTransaction::set_duty_cycle(0),
         ];
         let mut motor_in1 = PinMock::new(&motor_in1_expectations);
         let mut motor_in2 = PinMock::new(&motor_in2_expectations);
-        let mut motor_pwm = PinMock::new(&motor_pwm_expectations);
+        let mut motor_pwm = PwmMock::new(&motor_pwm_expectations);
 
         let mut motor = Motor::new(motor_in1.clone(), motor_in2.clone(), motor_pwm.clone());
 
@@ -357,13 +350,12 @@ mod tests {
         let motor_in1_expectations = [PinTransaction::set(High)];
         let motor_in2_expectations = [PinTransaction::set(Low)];
         let motor_pwm_expectations = [
-            PinTransaction::enable(),
-            PinTransaction::get_max_duty(max_duty),
-            PinTransaction::set_duty(speed as PwmDuty),
+            PwmTransaction::get_max_duty_cycle(max_duty),
+            PwmTransaction::set_duty_cycle(speed as u16),
         ];
         let mut motor_in1 = PinMock::new(&motor_in1_expectations);
         let mut motor_in2 = PinMock::new(&motor_in2_expectations);
-        let mut motor_pwm = PinMock::new(&motor_pwm_expectations);
+        let mut motor_pwm = PwmMock::new(&motor_pwm_expectations);
 
         let mut motor = Motor::new(motor_in1.clone(), motor_in2.clone(), motor_pwm.clone());
 
@@ -380,17 +372,16 @@ mod tests {
     #[test]
     fn test_motor_drive_backwards() {
         let max_duty = 100;
-        let speed: u8 = 100;
+        let speed = 100;
         let motor_in1_expectations = [PinTransaction::set(Low)];
         let motor_in2_expectations = [PinTransaction::set(High)];
         let motor_pwm_expectations = [
-            PinTransaction::enable(),
-            PinTransaction::get_max_duty(max_duty),
-            PinTransaction::set_duty(speed as PwmDuty),
+            PwmTransaction::get_max_duty_cycle(max_duty),
+            PwmTransaction::set_duty_cycle(speed as u16),
         ];
         let mut motor_in1 = PinMock::new(&motor_in1_expectations);
         let mut motor_in2 = PinMock::new(&motor_in2_expectations);
-        let mut motor_pwm = PinMock::new(&motor_pwm_expectations);
+        let mut motor_pwm = PwmMock::new(&motor_pwm_expectations);
 
         let mut motor = Motor::new(motor_in1.clone(), motor_in2.clone(), motor_pwm.clone());
 
@@ -408,10 +399,10 @@ mod tests {
     fn test_motor_drive_invalid_speed() {
         let motor_in1_expectations = [];
         let motor_in2_expectations = [];
-        let motor_pwm_expectations = [PinTransaction::enable()];
+        let motor_pwm_expectations = [];
         let mut motor_in1 = PinMock::new(&motor_in1_expectations);
         let mut motor_in2 = PinMock::new(&motor_in2_expectations);
-        let mut motor_pwm = PinMock::new(&motor_pwm_expectations);
+        let mut motor_pwm = PwmMock::new(&motor_pwm_expectations);
 
         let mut motor = Motor::new(motor_in1.clone(), motor_in2.clone(), motor_pwm.clone());
 

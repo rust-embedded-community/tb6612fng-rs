@@ -30,7 +30,8 @@ A simple example for the STM32F4 microcontrollers is [available](examples/stm32f
 For the changelog please see the dedicated [CHANGELOG.md](CHANGELOG.md).
 
 ## Roadmap to v1.0.0
-This crate is already stable, however it's based on a 0.x version of [`embedded-hal`](https://github.com/rust-embedded/embedded-hal/), making the API unstable (the change from 0.x to 1.x of e-h will be breaking).
+This crate is already stable, however it's based on athe v1.0.0 release candidate version of [`embedded-hal`](https://github.com/rust-embedded/embedded-hal/),
+making the API unstable (the change from 1.0.0-rc.1 to 1.0.0 of e-h will be breaking from a dependency management point of view).
 See [the tracking issue](https://github.com/rursprung/tb6612fng-rs/issues/4) for the roadmap to v1.0.0.
 
 ## Minimum Supported Rust Version (MSRV)
