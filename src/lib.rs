@@ -14,10 +14,10 @@
 //! * `defmt`: you can enable the `defmt` feature to get a `defmt::Format` implementation for all structs & enums in this crate and a `defmt::debug` call for every speed change.
 
 #![forbid(unsafe_code)]
-#![forbid(warnings)]
+#![deny(warnings)]
 #![forbid(missing_docs)]
 #![forbid(missing_debug_implementations)]
-#![forbid(unused)]
+#![deny(unused)]
 #![no_std]
 
 #[cfg(feature = "defmt")]
