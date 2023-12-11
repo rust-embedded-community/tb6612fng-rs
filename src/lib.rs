@@ -299,7 +299,7 @@ mod tests {
         let motor_in1_expectations = [PinTransaction::set(Low)];
         let motor_in2_expectations = [PinTransaction::set(Low)];
         let motor_pwm_expectations = [
-            PwmTransaction::get_max_duty_cycle(max_duty),
+            PwmTransaction::max_duty_cycle(max_duty),
             PwmTransaction::set_duty_cycle(0),
         ];
         let mut motor_in1 = PinMock::new(&motor_in1_expectations);
@@ -324,7 +324,7 @@ mod tests {
         let motor_in1_expectations = [PinTransaction::set(High)];
         let motor_in2_expectations = [PinTransaction::set(High)];
         let motor_pwm_expectations = [
-            PwmTransaction::get_max_duty_cycle(max_duty),
+            PwmTransaction::max_duty_cycle(max_duty),
             PwmTransaction::set_duty_cycle(0),
         ];
         let mut motor_in1 = PinMock::new(&motor_in1_expectations);
@@ -350,7 +350,7 @@ mod tests {
         let motor_in1_expectations = [PinTransaction::set(High)];
         let motor_in2_expectations = [PinTransaction::set(Low)];
         let motor_pwm_expectations = [
-            PwmTransaction::get_max_duty_cycle(max_duty),
+            PwmTransaction::max_duty_cycle(max_duty),
             PwmTransaction::set_duty_cycle(speed as u16),
         ];
         let mut motor_in1 = PinMock::new(&motor_in1_expectations);
@@ -376,7 +376,7 @@ mod tests {
         let motor_in1_expectations = [PinTransaction::set(Low)];
         let motor_in2_expectations = [PinTransaction::set(High)];
         let motor_pwm_expectations = [
-            PwmTransaction::get_max_duty_cycle(max_duty),
+            PwmTransaction::max_duty_cycle(max_duty),
             PwmTransaction::set_duty_cycle(speed as u16),
         ];
         let mut motor_in1 = PinMock::new(&motor_in1_expectations);
