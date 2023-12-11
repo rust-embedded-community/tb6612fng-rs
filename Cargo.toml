@@ -11,9 +11,9 @@ keywords = ["tb6612fng", "driver", "motor", "controller", "embedded-hal-driver"]
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-embedded-hal = "1.0.0-rc.1"
+embedded-hal = "=1.0.0-rc.1"
 
 defmt = { version = "0.3", optional = true }
 
 [dev-dependencies]
-embedded-hal-mock = { version = "0.10.0-rc.2", features = ["eh1"] }
+embedded-hal-mock = { version = "=0.10.0-rc.2", features = ["eh1"] }
