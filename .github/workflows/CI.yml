@@ -1,5 +1,8 @@
 name: CI
 
+permissions:
+  security-events: write # needed to upload SARIF reports on branch builds
+
 on:
   push:
     branches: [ "master" ]
