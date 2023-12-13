@@ -28,8 +28,6 @@ jobs:
         run: cargo test ${{ matrix.features }}
       - name: check formatting
         run: cargo fmt --all -- --check
-      - name: clippy
-        run: cargo clippy ${{ matrix.features }}
       - name: audit
         run: cargo audit
 
@@ -42,8 +40,8 @@ jobs:
         with:
           targets: thumbv7em-none-eabihf
           components: rustfmt clippy
-      - name: Install flip-link
-        run: cargo install flip-link
+      - name: Install required cargo components
+        run: cargo install clippy-sarif sarif-fmt flip-link
       - name: build
         run: cargo build
         working-directory: examples/stm32f4-single-motor-example
@@ -54,9 +52,40 @@ jobs:
       - name: check formatting
         run: cargo fmt --all -- --check
         working-directory: examples/stm32f4-single-motor-example
-      - name: clippy
-        run: cargo clippy
-        working-directory: examples/stm32f4-single-motor-example
       - name: audit
         run: cargo audit
         working-directory: examples/stm32f4-single-motor-example
+      - name: clippy (example)
+        # see the following comment for the patching workaround: https://github.com/psastras/sarif-rs/issues/370#issuecomment-1475364427
+        run: |
+          cargo clippy --message-format=json | \
+          clippy-sarif | \
+          jq --arg pwd "examples/stm32f4-single-motor-example" '.runs[].results[].locations[].physicalLocation.artifactLocation.uri |= $pwd + "/" + .' | \
+          tee rust-clippy-results.sarif | \
+          sarif-fmt
+        working-directory: examples/stm32f4-single-motor-example
+        continue-on-error: true
+      - name: Upload analysis results to GitHub
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: examples/stm32f4-single-motor-example/rust-clippy-results.sarif
+          wait-for-processing: true
+
+  clippy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: install rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt clippy
+      - name: Install required cargo components
+        run: cargo install clippy-sarif sarif-fmt
+      - name: clippy (lib)
+        run: cargo clippy --all-features --message-format=json | clippy-sarif | tee rust-clippy-results.sarif | sarif-fmt
+        continue-on-error: true
+      - name: Upload analysis results to GitHub
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: rust-clippy-results.sarif
+          wait-for-processing: true
