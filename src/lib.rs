@@ -75,26 +75,34 @@ where
 {
     /// Instantiate a new [`Tb6612fng`] with the defined pins.
     /// This also automatically enables the two PWM pins.
-    /// The initial state of the motors will be [stopped](DriveCommand::Stop).
+    /// The initial state of the motors will be set to [stopped](DriveCommand::Stop).
+    /// The initial state of standby will be *disabled*.
     ///
     /// Usage example:
     /// ```
     /// # use embedded_hal_mock::eh1::pin::Mock as PinMock;
     /// # use embedded_hal_mock::eh1::pwm::Mock as PwmMock;
-    /// # let motor_a_in1 = PinMock::new([]);
+    /// # use embedded_hal_mock::eh1::pwm::Transaction as PwmTransaction;
+    /// # use embedded_hal_mock::eh1::pin::Transaction as PinTransaction;
+    /// # use embedded_hal_mock::eh1::pin::State::{High, Low};
+    ///
+    /// # let motor_a_in1 = PinMock::new(&[PinTransaction::set(Low)]);
     /// # let mut motor_a_in1_ = motor_a_in1.clone();
-    /// # let motor_a_in2 = PinMock::new([]);
+    /// # let motor_a_in2 = PinMock::new(&[PinTransaction::set(Low)]);
     /// # let mut motor_a_in2_ = motor_a_in2.clone();
-    /// # let motor_a_pwm = PwmMock::new(&[]);
+    /// # let motor_a_pwm = PwmMock::new(&[PwmTransaction::max_duty_cycle(100), PwmTransaction::set_duty_cycle(0)]);
     /// # let mut motor_a_pwm_ = motor_a_pwm.clone();
-    /// # let motor_b_in1 = PinMock::new([]);
+    ///
+    /// # let motor_b_in1 = PinMock::new(&[PinTransaction::set(Low)]);
     /// # let mut motor_b_in1_ = motor_b_in1.clone();
-    /// # let motor_b_in2 = PinMock::new([]);
+    /// # let motor_b_in2 = PinMock::new(&[PinTransaction::set(Low)]);
     /// # let mut motor_b_in2_ = motor_b_in2.clone();
-    /// # let motor_b_pwm = PwmMock::new(&[]);
+    /// # let motor_b_pwm = PwmMock::new(&[PwmTransaction::max_duty_cycle(100), PwmTransaction::set_duty_cycle(0)]);
     /// # let mut motor_b_pwm_ = motor_b_pwm.clone();
-    /// # let standby = PinMock::new([]);
+    ///
+    /// # let standby = PinMock::new(&[PinTransaction::set(High)]);
     /// # let mut standby_ = standby.clone();
+    ///
     /// use tb6612fng::Tb6612fng;
     ///
     /// let controller = Tb6612fng::new(
@@ -124,11 +132,15 @@ where
         motor_b_pwm: MBPWM,
         standby: STBY,
     ) -> Tb6612fng<MAIN1, MAIN2, MAPWM, MBIN1, MBIN2, MBPWM, STBY> {
-        Tb6612fng {
+        let mut controller = Tb6612fng {
             motor_a: Motor::new(motor_a_in1, motor_a_in2, motor_a_pwm),
             motor_b: Motor::new(motor_b_in1, motor_b_in2, motor_b_pwm),
             standby,
-        }
+        };
+
+        controller.disable_standby();
+
+        controller
     }
 
     /// Enable standby. This ignores any other setting currently done on the motors and puts them into standby.
@@ -165,18 +177,20 @@ where
 {
     /// Instantiate a new [`Motor`] with the defined pins.
     /// This also automatically enables the PWM pin.
-    /// The initial state of the motor will be [stopped](DriveCommand::Stop).
+    /// The initial state of the motor will be set to [stopped](DriveCommand::Stop).
     ///
     /// Usage example:
     /// ```
     /// # use embedded_hal_mock::eh1::pin::Mock as PinMock;
     /// # use embedded_hal_mock::eh1::pwm::Mock as PwmMock;
+    /// # use embedded_hal_mock::eh1::pwm::Transaction as PwmTransaction;
     /// # use embedded_hal_mock::eh1::pin::Transaction as PinTransaction;
-    /// # let motor_in1 = PinMock::new([]);
+    /// # use embedded_hal_mock::eh1::pin::State::{Low};
+    /// # let motor_in1 = PinMock::new(&[PinTransaction::set(Low)]);
     /// # let mut motor_in1_ = motor_in1.clone();
-    /// # let motor_in2 = PinMock::new([]);
+    /// # let motor_in2 = PinMock::new(&[PinTransaction::set(Low)]);
     /// # let mut motor_in2_ = motor_in2.clone();
-    /// # let motor_pwm = PwmMock::new([]);
+    /// # let motor_pwm = PwmMock::new(&[PwmTransaction::max_duty_cycle(100), PwmTransaction::set_duty_cycle(0)]);
     /// # let mut motor_pwm_ = motor_pwm.clone();
     /// use tb6612fng::Motor;
     ///
@@ -191,12 +205,16 @@ where
     /// # motor_pwm_.done();
     /// ```
     pub fn new(in1: IN1, in2: IN2, pwm: PWM) -> Motor<IN1, IN2, PWM> {
-        Motor {
+        let mut motor = Motor {
             in1,
             in2,
             pwm,
             current_drive_command: DriveCommand::Stop,
-        }
+        };
+
+        motor.drive(motor.current_drive_command).unwrap();
+
+        motor
     }
 
     /// Drive forward with the defined speed. Note that the speed is a percentage between 0 and 100!
@@ -296,9 +314,11 @@ mod tests {
     #[test]
     fn test_motor_stop() {
         let max_duty = 100;
-        let motor_in1_expectations = [PinTransaction::set(Low)];
-        let motor_in2_expectations = [PinTransaction::set(Low)];
+        let motor_in1_expectations = [PinTransaction::set(Low), PinTransaction::set(Low)];
+        let motor_in2_expectations = [PinTransaction::set(Low), PinTransaction::set(Low)];
         let motor_pwm_expectations = [
+            PwmTransaction::max_duty_cycle(max_duty),
+            PwmTransaction::set_duty_cycle(0),
             PwmTransaction::max_duty_cycle(max_duty),
             PwmTransaction::set_duty_cycle(0),
         ];
@@ -321,9 +341,11 @@ mod tests {
     #[test]
     fn test_motor_brake() {
         let max_duty = 100;
-        let motor_in1_expectations = [PinTransaction::set(High)];
-        let motor_in2_expectations = [PinTransaction::set(High)];
+        let motor_in1_expectations = [PinTransaction::set(Low), PinTransaction::set(High)];
+        let motor_in2_expectations = [PinTransaction::set(Low), PinTransaction::set(High)];
         let motor_pwm_expectations = [
+            PwmTransaction::max_duty_cycle(max_duty),
+            PwmTransaction::set_duty_cycle(0),
             PwmTransaction::max_duty_cycle(max_duty),
             PwmTransaction::set_duty_cycle(0),
         ];
@@ -347,9 +369,11 @@ mod tests {
     fn test_motor_drive_forward() {
         let max_duty = 100;
         let speed: u8 = 100;
-        let motor_in1_expectations = [PinTransaction::set(High)];
-        let motor_in2_expectations = [PinTransaction::set(Low)];
+        let motor_in1_expectations = [PinTransaction::set(Low), PinTransaction::set(High)];
+        let motor_in2_expectations = [PinTransaction::set(Low), PinTransaction::set(Low)];
         let motor_pwm_expectations = [
+            PwmTransaction::max_duty_cycle(max_duty),
+            PwmTransaction::set_duty_cycle(0),
             PwmTransaction::max_duty_cycle(max_duty),
             PwmTransaction::set_duty_cycle(speed as u16),
         ];
@@ -373,9 +397,11 @@ mod tests {
     fn test_motor_drive_backwards() {
         let max_duty = 100;
         let speed = 100;
-        let motor_in1_expectations = [PinTransaction::set(Low)];
-        let motor_in2_expectations = [PinTransaction::set(High)];
+        let motor_in1_expectations = [PinTransaction::set(Low), PinTransaction::set(Low)];
+        let motor_in2_expectations = [PinTransaction::set(Low), PinTransaction::set(High)];
         let motor_pwm_expectations = [
+            PwmTransaction::max_duty_cycle(max_duty),
+            PwmTransaction::set_duty_cycle(0),
             PwmTransaction::max_duty_cycle(max_duty),
             PwmTransaction::set_duty_cycle(speed as u16),
         ];
@@ -397,16 +423,20 @@ mod tests {
 
     #[test]
     fn test_motor_drive_invalid_speed() {
-        let motor_in1_expectations = [];
-        let motor_in2_expectations = [];
-        let motor_pwm_expectations = [];
+        let max_duty = 100;
+        let motor_in1_expectations = [PinTransaction::set(Low)];
+        let motor_in2_expectations = [PinTransaction::set(Low)];
+        let motor_pwm_expectations = [
+            PwmTransaction::max_duty_cycle(max_duty),
+            PwmTransaction::set_duty_cycle(0),
+        ];
         let mut motor_in1 = PinMock::new(&motor_in1_expectations);
         let mut motor_in2 = PinMock::new(&motor_in2_expectations);
         let mut motor_pwm = PwmMock::new(&motor_pwm_expectations);
 
         let mut motor = Motor::new(motor_in1.clone(), motor_in2.clone(), motor_pwm.clone());
 
-        let current_drive_command = motor.current_drive_command().clone();
+        let current_drive_command = *motor.current_drive_command();
         let current_speed = motor.current_speed();
 
         assert_eq!(
