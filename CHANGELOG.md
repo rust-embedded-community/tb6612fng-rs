@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 * `Motor::new()` and `Driver::new()` methods now set the outputs upon their
   initialisation to the documented defaults.
-* Update to `embedded-hal=1.0.0-rc.2`
+* Breaking: update to `embedded-hal` 1.0
 
 ## [0.2.0] - 2023-11-28
 ### Changed
