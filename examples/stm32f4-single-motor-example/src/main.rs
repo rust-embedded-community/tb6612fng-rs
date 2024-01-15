@@ -52,8 +52,8 @@ mod app {
             .pwm_hz(Channel3::new(gpiob.pb10), 100.kHz(), &clocks)
             .split();
         motor_pwm.enable();
-        let mut motor = Motor::new(motor_in1, motor_in2, motor_pwm);
-        motor.drive_backwards(0).expect("");
+        let mut motor = Motor::new(motor_in1, motor_in2, motor_pwm).unwrap();
+        motor.drive(DriveCommand::Backward(0)).unwrap();
 
         // set up the button
         let mut button = gpioc.pc13.into_pull_down_input();
@@ -103,20 +103,20 @@ mod app {
                     }
                     0 => {
                         *motor_ramp_direction = 1;
-                        DriveCommand::Backwards(1)
+                        DriveCommand::Backward(1)
                     }
                     _ => DriveCommand::Forward((*speed as i8 + *motor_ramp_direction) as u8),
                 },
-                DriveCommand::Backwards(speed) => match speed {
+                DriveCommand::Backward(speed) => match speed {
                     100 => {
                         *motor_ramp_direction = -1;
-                        DriveCommand::Backwards(99)
+                        DriveCommand::Backward(99)
                     }
                     0 => {
                         *motor_ramp_direction = 1;
                         DriveCommand::Forward(1)
                     }
-                    _ => DriveCommand::Backwards((*speed as i8 + *motor_ramp_direction) as u8),
+                    _ => DriveCommand::Backward((*speed as i8 + *motor_ramp_direction) as u8),
                 },
                 DriveCommand::Stop | DriveCommand::Brake => {
                     return;
@@ -140,16 +140,16 @@ mod app {
             .lock(|motor| match motor.current_drive_command() {
                 DriveCommand::Stop => {
                     defmt::info!("motor stopped => applying brake");
-                    motor.brake();
+                    motor.drive(DriveCommand::Brake).unwrap();
                 }
                 DriveCommand::Brake => {
                     defmt::info!("brake was on => starting the motor again");
-                    motor.drive_backwards(0).expect("");
+                    motor.drive(DriveCommand::Backward(0)).unwrap();
                     update_motor_speed::spawn_after(100.millis()).ok();
                 }
                 _ => {
                     defmt::info!("was driving so far => stopping the motor");
-                    motor.stop();
+                    motor.drive(DriveCommand::Stop).unwrap();
                 }
             });
     }
