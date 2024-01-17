@@ -22,7 +22,7 @@ jobs:
         uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.rust }}
-          components: rustfmt clippy
+          components: rustfmt
       - name: build
         run: cargo build ${{ matrix.features }}
       - name: check
@@ -81,7 +81,7 @@ jobs:
       - name: install rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
-          components: rustfmt clippy
+          components: clippy
       - name: Install required cargo components
         run: cargo install clippy-sarif sarif-fmt
       - name: clippy (lib)
