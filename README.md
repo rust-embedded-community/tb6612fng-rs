@@ -1,5 +1,5 @@
 # Rust Driver for TB6612FNG Motor Driver
-[![CI](https://github.com/rursprung/tb6612fng-rs/actions/workflows/CI.yml/badge.svg)](https://github.com/rursprung/tb6612fng-rs/actions/workflows/CI.yml)
+[![CI](https://github.com/rust-embedded-community/tb6612fng-rs/actions/workflows/CI.yml/badge.svg)](https://github.com/rust-embedded-community/tb6612fng-rs/actions/workflows/CI.yml)
 [![Crates.io](https://img.shields.io/crates/v/tb6612fng)](https://crates.io/crates/tb6612fng)
 ![Licenses](https://img.shields.io/crates/l/tb6612fng)
 [![unsafe forbidden](https://img.shields.io/badge/unsafe-forbidden-success.svg)](https://github.com/rust-secure-code/safety-dance/)
@@ -33,7 +33,7 @@ For the changelog please see the dedicated [CHANGELOG.md](CHANGELOG.md).
 This crate is already stable, however it's based on a release candidate version of [`embedded-hal`](https://github.com/rust-embedded/embedded-hal/),
 making the API unstable (the change from 1.0.0-rc.1 to 1.0.0 of e-h will be breaking from a dependency management point of view).
 
-See [the tracking issue](https://github.com/rursprung/tb6612fng-rs/issues/4) for the roadmap to v1.0.0.
+See [the tracking issue](https://github.com/rust-embedded-community/tb6612fng-rs/issues/4) for the roadmap to v1.0.0.
 
 ## Minimum Supported Rust Version (MSRV)
 This crate is guaranteed to compile on stable Rust 1.62 and up. It *might*
