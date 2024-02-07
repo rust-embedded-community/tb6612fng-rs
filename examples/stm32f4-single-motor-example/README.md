@@ -19,7 +19,7 @@ to stop (coast, first press), actively brake (second press) and drive again (thi
 
 ## Prerequisites
 1. Optional: ensure that the rust toolchain is up-to-date: `rustup update`
-1. Install `probe-run`: `cargo install probe-run`
+1. Install [`probe-rs`](https://crates.io/crates/probe-rs): `cargo install probe-rs --features cli`
 1. Install `flip-link`: `cargo install flip-link`
     * Note: `flip-link` is not strictly necessary for this example (it doesn't need
       stack protection), however it can be considered best practices to include it.
