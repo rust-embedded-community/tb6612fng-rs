@@ -7,13 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- next-header -->
 ## [Unreleased] - ReleaseDate
 ### Changed
+
 * `Motor::new()` and `Driver::new()` methods now set the outputs upon their
   initialisation to the documented defaults.
+* `Motor::new()` and `Driver::new()` methods now also return errors if they fail
+  to set their outputs upon initialisation.
 * Breaking: update to `embedded-hal` 1.0
+* Renamed error types to their struct names
+* Renamed `DriveCommand::Backwards` to `DriveCommand::Backward` to match
+  `DriveCommand::Forward`
+
+### Removed
+
+* Removed the `drive_forward`, `drive_backward`, `stop` and `brake`
+  functions as they are duplicates to the `drive` function with the
+  different enum variants and make the API surface larger
 
 ## [0.2.0] - 2023-11-28
+
 ### Changed
-* Due to dependency updates the MSRV has been updated from 1.60 to 1.63. This should only be relevant if you use the `defmt` feature, but we now only test with 1.63 and not older releases, so it's not guaranteed to work otherwise.
+
+* Due to dependency updates the MSRV has been updated from 1.60 to 1.63. This
+  should only be relevant if you use the `defmt` feature, but we now only test
+  with 1.63 and not older releases, so it's not guaranteed to work otherwise.
 * Breaking: the API was migrated from `embedded-hal:0.2` to `embedded-hal:1.0.0-rc1`.
   If your HAL does not yet implement this, then please use the previous release of the library.
 

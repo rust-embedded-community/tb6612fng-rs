@@ -25,12 +25,38 @@ use defmt::Format;
 use embedded_hal::digital::OutputPin;
 use embedded_hal::pwm::SetDutyCycle;
 
-/// Defines errors which can happen while trying to set a speed.
+/// Defines errors which can happen when calling [`Motor::drive()`].
 #[derive(PartialEq, Eq, Debug, Copy, Clone)]
 #[cfg_attr(feature = "defmt", derive(Format))]
-pub enum DriveError {
+pub enum MotorError<IN1Error, IN2Error, PWMError> {
     /// An invalid speed has been defined. The speed must be given as a percentage value between 0 and 100 to be valid.
     InvalidSpeed,
+    /// An error in setting the output of the IN1 pin
+    In1Error(IN1Error),
+    /// An error in setting the output of the IN2 pin
+    In2Error(IN2Error),
+    /// An error in setting the output of the PWM pin
+    PwmError(PWMError),
+}
+
+/// Defines errors which can happen when calling [`Tb6612fng::new()`].
+#[derive(PartialEq, Eq, Debug, Copy, Clone)]
+#[cfg_attr(feature = "defmt", derive(Format))]
+pub enum Tb6612fngError<
+    MAIN1Error,
+    MAIN2Error,
+    MAPWMError,
+    MBIN1Error,
+    MBIN2Error,
+    MBPWMError,
+    STBYError,
+> {
+    /// An error in setting the initial `drive()` of `motor_a`
+    MotorA(MotorError<MAIN1Error, MAIN2Error, MAPWMError>),
+    /// An error in setting the initial `drive()` of `motor_b`
+    MotorB(MotorError<MBIN1Error, MBIN2Error, MBPWMError>),
+    /// An error in setting the initial output of the standby pin
+    Standby(STBYError),
 }
 
 /// Defines the possible drive commands.
@@ -39,8 +65,8 @@ pub enum DriveError {
 pub enum DriveCommand {
     /// Drive forward with the defined speed (in percentage)
     Forward(u8),
-    /// Drive backwards with the defined speed (in percentage)
-    Backwards(u8),
+    /// Drive backward with the defined speed (in percentage)
+    Backward(u8),
     /// Actively brake
     Brake,
     /// Coast, i.e. stop but don't actively brake.
@@ -123,6 +149,7 @@ where
     /// # motor_b_pwm_.done();
     /// # standby_.done();
     /// ```
+    #[allow(clippy::type_complexity)]
     pub fn new(
         motor_a_in1: MAIN1,
         motor_a_in2: MAIN2,
@@ -131,29 +158,44 @@ where
         motor_b_in2: MBIN2,
         motor_b_pwm: MBPWM,
         standby: STBY,
-    ) -> Tb6612fng<MAIN1, MAIN2, MAPWM, MBIN1, MBIN2, MBPWM, STBY> {
+    ) -> Result<
+        Tb6612fng<MAIN1, MAIN2, MAPWM, MBIN1, MBIN2, MBPWM, STBY>,
+        Tb6612fngError<
+            MAIN1::Error,
+            MAIN2::Error,
+            MAPWM::Error,
+            MBIN1::Error,
+            MBIN2::Error,
+            MBPWM::Error,
+            STBY::Error,
+        >,
+    > {
         let mut controller = Tb6612fng {
-            motor_a: Motor::new(motor_a_in1, motor_a_in2, motor_a_pwm),
-            motor_b: Motor::new(motor_b_in1, motor_b_in2, motor_b_pwm),
+            motor_a: Motor::new(motor_a_in1, motor_a_in2, motor_a_pwm)
+                .map_err(Tb6612fngError::MotorA)?,
+            motor_b: Motor::new(motor_b_in1, motor_b_in2, motor_b_pwm)
+                .map_err(Tb6612fngError::MotorB)?,
             standby,
         };
 
-        controller.disable_standby();
-
         controller
+            .disable_standby()
+            .map_err(Tb6612fngError::Standby)?;
+
+        Ok(controller)
     }
 
     /// Enable standby. This ignores any other setting currently done on the motors and puts them into standby.
     ///
     /// Note that this does not change any commands on the motors, i.e. the PWM signal will continue
     /// and once [`Tb6612fng::disable_standby`] is called the motor will pick up where it left off (unless the command was changed in-between).
-    pub fn enable_standby(&mut self) {
-        self.standby.set_low().ok();
+    pub fn enable_standby(&mut self) -> Result<(), STBY::Error> {
+        self.standby.set_low()
     }
 
     /// Disable standby. Note that the last active commands on the motors will resume.
-    pub fn disable_standby(&mut self) {
-        self.standby.set_high().ok();
+    pub fn disable_standby(&mut self) -> Result<(), STBY::Error> {
+        self.standby.set_high()
     }
 }
 
@@ -204,7 +246,12 @@ where
     /// # motor_in2_.done();
     /// # motor_pwm_.done();
     /// ```
-    pub fn new(in1: IN1, in2: IN2, pwm: PWM) -> Motor<IN1, IN2, PWM> {
+    #[allow(clippy::type_complexity)]
+    pub fn new(
+        in1: IN1,
+        in2: IN2,
+        pwm: PWM,
+    ) -> Result<Motor<IN1, IN2, PWM>, MotorError<IN1::Error, IN2::Error, PWM::Error>> {
         let mut motor = Motor {
             in1,
             in2,
@@ -212,60 +259,42 @@ where
             current_drive_command: DriveCommand::Stop,
         };
 
-        motor.drive(motor.current_drive_command).unwrap();
+        motor.drive(motor.current_drive_command)?;
 
-        motor
-    }
-
-    /// Drive forward with the defined speed. Note that the speed is a percentage between 0 and 100!
-    pub fn drive_forward(&mut self, speed: u8) -> Result<(), DriveError> {
-        self.drive(DriveCommand::Forward(speed))
-    }
-
-    /// Drive backwards with the defined speed. Note that the speed is a percentage between 0 and 100!
-    pub fn drive_backwards(&mut self, speed: u8) -> Result<(), DriveError> {
-        self.drive(DriveCommand::Backwards(speed))
-    }
-
-    /// Actively brake.
-    pub fn brake(&mut self) {
-        self.drive(DriveCommand::Brake)
-            .expect("could set speed to brake");
-    }
-
-    /// Stop the motor but don't brake (let it coast).
-    pub fn stop(&mut self) {
-        self.drive(DriveCommand::Stop)
-            .expect("could set speed to stop");
+        Ok(motor)
     }
 
     /// Drive with the defined speed (or brake or stop the motor).
-    pub fn drive(&mut self, drive_command: DriveCommand) -> Result<(), DriveError> {
+    #[allow(clippy::type_complexity)]
+    pub fn drive(
+        &mut self,
+        drive_command: DriveCommand,
+    ) -> Result<(), MotorError<IN1::Error, IN2::Error, PWM::Error>> {
         let speed = match drive_command {
-            DriveCommand::Forward(s) | DriveCommand::Backwards(s) => s,
+            DriveCommand::Forward(s) | DriveCommand::Backward(s) => s,
             _ => 0,
         };
 
         if speed > 100 {
-            return Err(DriveError::InvalidSpeed);
+            return Err(MotorError::InvalidSpeed);
         }
 
         match drive_command {
             DriveCommand::Forward(_) => {
-                self.in1.set_high().ok();
-                self.in2.set_low().ok();
+                self.in1.set_high().map_err(MotorError::In1Error)?;
+                self.in2.set_low().map_err(MotorError::In2Error)?;
             }
-            DriveCommand::Backwards(_) => {
-                self.in1.set_low().ok();
-                self.in2.set_high().ok();
+            DriveCommand::Backward(_) => {
+                self.in1.set_low().map_err(MotorError::In1Error)?;
+                self.in2.set_high().map_err(MotorError::In2Error)?;
             }
             DriveCommand::Brake => {
-                self.in1.set_high().ok();
-                self.in2.set_high().ok();
+                self.in1.set_high().map_err(MotorError::In1Error)?;
+                self.in2.set_high().map_err(MotorError::In2Error)?;
             }
             DriveCommand::Stop => {
-                self.in1.set_low().ok();
-                self.in2.set_low().ok();
+                self.in1.set_low().map_err(MotorError::In1Error)?;
+                self.in2.set_low().map_err(MotorError::In2Error)?;
             }
         }
 
@@ -274,7 +303,7 @@ where
 
         self.pwm
             .set_duty_cycle_percent(speed)
-            .map_err(|_| DriveError::InvalidSpeed)?;
+            .map_err(MotorError::PwmError)?;
 
         self.current_drive_command = drive_command;
 
@@ -289,13 +318,13 @@ where
     }
 
     /// Return the current speed of the motor (in percentage). Note that driving forward returns a positive number
-    /// while driving backwards returns a negative number and both [`DriveCommand::Brake`] and [`DriveCommand::Stop`] return 0.
+    /// while driving backward returns a negative number and both [`DriveCommand::Brake`] and [`DriveCommand::Stop`] return 0.
     ///
     /// If you need to know in more details what the current status is consider calling [`Motor::current_drive_command`] instead.
     pub fn current_speed(&self) -> i8 {
         match self.current_drive_command() {
             DriveCommand::Forward(s) => *s as i8,
-            DriveCommand::Backwards(s) => -(*s as i8),
+            DriveCommand::Backward(s) => -(*s as i8),
             DriveCommand::Brake => 0,
             DriveCommand::Stop => 0,
         }
@@ -304,7 +333,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::{DriveCommand, DriveError, Motor};
+    use crate::{DriveCommand, Motor, MotorError};
     use embedded_hal_mock::eh1::pin::Mock as PinMock;
     use embedded_hal_mock::eh1::pin::State::{High, Low};
     use embedded_hal_mock::eh1::pin::Transaction as PinTransaction;
@@ -326,9 +355,10 @@ mod tests {
         let mut motor_in2 = PinMock::new(&motor_in2_expectations);
         let mut motor_pwm = PwmMock::new(&motor_pwm_expectations);
 
-        let mut motor = Motor::new(motor_in1.clone(), motor_in2.clone(), motor_pwm.clone());
+        let mut motor =
+            Motor::new(motor_in1.clone(), motor_in2.clone(), motor_pwm.clone()).unwrap();
 
-        motor.stop();
+        motor.drive(DriveCommand::Stop).unwrap();
 
         assert_eq!(*motor.current_drive_command(), DriveCommand::Stop);
         assert_eq!(motor.current_speed(), 0);
@@ -353,9 +383,10 @@ mod tests {
         let mut motor_in2 = PinMock::new(&motor_in2_expectations);
         let mut motor_pwm = PwmMock::new(&motor_pwm_expectations);
 
-        let mut motor = Motor::new(motor_in1.clone(), motor_in2.clone(), motor_pwm.clone());
+        let mut motor =
+            Motor::new(motor_in1.clone(), motor_in2.clone(), motor_pwm.clone()).unwrap();
 
-        motor.brake();
+        motor.drive(DriveCommand::Brake).unwrap();
 
         assert_eq!(*motor.current_drive_command(), DriveCommand::Brake);
         assert_eq!(motor.current_speed(), 0);
@@ -381,9 +412,12 @@ mod tests {
         let mut motor_in2 = PinMock::new(&motor_in2_expectations);
         let mut motor_pwm = PwmMock::new(&motor_pwm_expectations);
 
-        let mut motor = Motor::new(motor_in1.clone(), motor_in2.clone(), motor_pwm.clone());
+        let mut motor =
+            Motor::new(motor_in1.clone(), motor_in2.clone(), motor_pwm.clone()).unwrap();
 
-        motor.drive_forward(speed).expect("speed can be set");
+        motor
+            .drive(DriveCommand::Forward(speed))
+            .expect("speed can be set");
 
         assert_eq!(*motor.current_drive_command(), DriveCommand::Forward(100));
         assert_eq!(motor.current_speed(), speed as i8);
@@ -394,7 +428,7 @@ mod tests {
     }
 
     #[test]
-    fn test_motor_drive_backwards() {
+    fn test_motor_drive_backward() {
         let max_duty = 100;
         let speed = 100;
         let motor_in1_expectations = [PinTransaction::set(Low), PinTransaction::set(Low)];
@@ -409,11 +443,14 @@ mod tests {
         let mut motor_in2 = PinMock::new(&motor_in2_expectations);
         let mut motor_pwm = PwmMock::new(&motor_pwm_expectations);
 
-        let mut motor = Motor::new(motor_in1.clone(), motor_in2.clone(), motor_pwm.clone());
+        let mut motor =
+            Motor::new(motor_in1.clone(), motor_in2.clone(), motor_pwm.clone()).unwrap();
 
-        motor.drive_backwards(speed).expect("speed can be set");
+        motor
+            .drive(DriveCommand::Backward(speed))
+            .expect("speed can be set");
 
-        assert_eq!(*motor.current_drive_command(), DriveCommand::Backwards(100));
+        assert_eq!(*motor.current_drive_command(), DriveCommand::Backward(100));
         assert_eq!(motor.current_speed(), -(speed as i8));
 
         motor_in1.done();
@@ -434,16 +471,17 @@ mod tests {
         let mut motor_in2 = PinMock::new(&motor_in2_expectations);
         let mut motor_pwm = PwmMock::new(&motor_pwm_expectations);
 
-        let mut motor = Motor::new(motor_in1.clone(), motor_in2.clone(), motor_pwm.clone());
+        let mut motor =
+            Motor::new(motor_in1.clone(), motor_in2.clone(), motor_pwm.clone()).unwrap();
 
         let current_drive_command = *motor.current_drive_command();
         let current_speed = motor.current_speed();
 
         assert_eq!(
             motor
-                .drive_forward(101)
+                .drive(DriveCommand::Forward(101))
                 .expect_err("Invalid speed must result in an exception"),
-            DriveError::InvalidSpeed
+            MotorError::InvalidSpeed
         );
 
         // this should still be what was set before the invalid command
