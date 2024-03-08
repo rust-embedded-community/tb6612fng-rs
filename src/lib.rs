@@ -22,7 +22,7 @@
 
 #[cfg(feature = "defmt")]
 use defmt::Format;
-use embedded_hal::digital::OutputPin;
+use embedded_hal::digital::{OutputPin, StatefulOutputPin};
 use embedded_hal::pwm::SetDutyCycle;
 
 /// Defines errors which can happen when calling [`Motor::drive()`].
@@ -196,6 +196,16 @@ where
     /// Disable standby. Note that the last active commands on the motors will resume.
     pub fn disable_standby(&mut self) -> Result<(), STBY::Error> {
         self.standby.set_high()
+    }
+
+    /// Returns whether the standby mode is enabled.
+    ///
+    /// *NOTE* this does *not* read the electrical state of the pin, see [`StatefulOutputPin`]
+    pub fn current_standby(&mut self) -> Result<bool, STBY::Error>
+    where
+        STBY: StatefulOutputPin,
+    {
+        self.standby.is_set_high()
     }
 }
 

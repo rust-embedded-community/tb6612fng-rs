@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- next-header -->
 ## [Unreleased] - ReleaseDate
+### Added
+* Add a `current_standby()` method to check if the driver is currently in standby mode.
+
 ### Changed
 
 * `Motor::new()` and `Driver::new()` methods now set the outputs upon their
