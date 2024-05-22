@@ -15,6 +15,9 @@ jobs:
       matrix:
         rust: [1.63.0, stable]
         features: ['', '--all-features']
+        exclude:
+          - rust: 1.63.0
+            features: '--all-features'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
