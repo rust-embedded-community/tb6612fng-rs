@@ -106,11 +106,11 @@ where
     ///
     /// Usage example:
     /// ```
-    /// # use embedded_hal_mock::eh1::pin::Mock as PinMock;
+    /// # use embedded_hal_mock::eh1::digital::Mock as PinMock;
     /// # use embedded_hal_mock::eh1::pwm::Mock as PwmMock;
     /// # use embedded_hal_mock::eh1::pwm::Transaction as PwmTransaction;
-    /// # use embedded_hal_mock::eh1::pin::Transaction as PinTransaction;
-    /// # use embedded_hal_mock::eh1::pin::State::{High, Low};
+    /// # use embedded_hal_mock::eh1::digital::Transaction as PinTransaction;
+    /// # use embedded_hal_mock::eh1::digital::State::{High, Low};
     ///
     /// # let motor_a_in1 = PinMock::new(&[PinTransaction::set(Low)]);
     /// # let mut motor_a_in1_ = motor_a_in1.clone();
@@ -233,11 +233,11 @@ where
     ///
     /// Usage example:
     /// ```
-    /// # use embedded_hal_mock::eh1::pin::Mock as PinMock;
+    /// # use embedded_hal_mock::eh1::digital::Mock as PinMock;
     /// # use embedded_hal_mock::eh1::pwm::Mock as PwmMock;
     /// # use embedded_hal_mock::eh1::pwm::Transaction as PwmTransaction;
-    /// # use embedded_hal_mock::eh1::pin::Transaction as PinTransaction;
-    /// # use embedded_hal_mock::eh1::pin::State::{Low};
+    /// # use embedded_hal_mock::eh1::digital::Transaction as PinTransaction;
+    /// # use embedded_hal_mock::eh1::digital::State::{Low};
     /// # let motor_in1 = PinMock::new(&[PinTransaction::set(Low)]);
     /// # let mut motor_in1_ = motor_in1.clone();
     /// # let motor_in2 = PinMock::new(&[PinTransaction::set(Low)]);
@@ -344,9 +344,9 @@ where
 #[cfg(test)]
 mod tests {
     use crate::{DriveCommand, Motor, MotorError};
-    use embedded_hal_mock::eh1::pin::Mock as PinMock;
-    use embedded_hal_mock::eh1::pin::State::{High, Low};
-    use embedded_hal_mock::eh1::pin::Transaction as PinTransaction;
+    use embedded_hal_mock::eh1::digital::Mock as PinMock;
+    use embedded_hal_mock::eh1::digital::State::{High, Low};
+    use embedded_hal_mock::eh1::digital::Transaction as PinTransaction;
     use embedded_hal_mock::eh1::pwm::Mock as PwmMock;
     use embedded_hal_mock::eh1::pwm::Transaction as PwmTransaction;
 
