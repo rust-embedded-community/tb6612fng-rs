@@ -16,4 +16,4 @@ embedded-hal = "1.0"
 defmt = { version = "0.3", optional = true }
 
 [dev-dependencies]
-embedded-hal-mock = "0.10"
+embedded-hal-mock = "0.11"
