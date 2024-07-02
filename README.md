@@ -21,7 +21,7 @@ See the documentation for usage examples.
 * You plan on using a single motor without the standby feature: use `Motor`
 
 ## Optional features
-* `defmt`: you can enable the [`defmt`](https://defmt.ferrous-systems.com/) feature to get a `defmt::debug!` call for every speed change.
+* `defmt-03`: you can enable this feature to get a `defmt::Format` implementation for all structs & enums in this crate and a `defmt::debug` call for every speed change.
 
 ## Examples
 A simple example for the STM32F4 microcontrollers is [available](examples/stm32f4-single-motor-example/README.md).
