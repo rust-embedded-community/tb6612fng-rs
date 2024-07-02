@@ -9,6 +9,7 @@ repository = "https://github.com/rust-embedded-community/tb6612fng-rs"
 categories = ["embedded", "hardware-support", "no-std", "no-std::no-alloc"]
 keywords = ["tb6612fng", "driver", "motor", "controller", "embedded-hal-driver"]
 license = "MIT OR Apache-2.0"
+authors = ["Ralph Ursprung <ralph.ursprung@gmail.com>", "ripytide <james.forsterer@gmail.com>"]
 
 [features]
 defmt-03 = ["dep:defmt"]
