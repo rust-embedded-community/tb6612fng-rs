@@ -104,7 +104,11 @@ where
     /// The initial state of the motors will be set to [stopped](DriveCommand::Stop).
     /// The initial state of standby will be *disabled*.
     ///
-    /// Usage example:
+    /// # Errors
+    /// If any of the underlying pin interactions fail these errors will be propagated up.
+    /// The errors are specific to your HAL.
+    ///
+    /// # Usage example
     /// ```
     /// # use embedded_hal_mock::eh1::digital::Mock as PinMock;
     /// # use embedded_hal_mock::eh1::pwm::Mock as PwmMock;
@@ -189,11 +193,19 @@ where
     ///
     /// Note that this does not change any commands on the motors, i.e. the PWM signal will continue
     /// and once [`Tb6612fng::disable_standby`] is called the motor will pick up where it left off (unless the command was changed in-between).
+    ///
+    /// # Errors
+    /// If the underlying pin interaction fails this error will be propagated up.
+    /// The error is specific to your HAL.
     pub fn enable_standby(&mut self) -> Result<(), STBY::Error> {
         self.standby.set_low()
     }
 
     /// Disable standby. Note that the last active commands on the motors will resume.
+    ///
+    /// # Errors
+    /// If the underlying pin interaction fails this error will be propagated up.
+    /// The error is specific to your HAL.
     pub fn disable_standby(&mut self) -> Result<(), STBY::Error> {
         self.standby.set_high()
     }
@@ -201,6 +213,10 @@ where
     /// Returns whether the standby mode is enabled.
     ///
     /// *NOTE* this does *not* read the electrical state of the pin, see [`StatefulOutputPin`]
+    ///
+    /// # Errors
+    /// If the underlying pin interaction fails this error will be propagated up.
+    /// The error is specific to your HAL.
     pub fn current_standby(&mut self) -> Result<bool, STBY::Error>
     where
         STBY: StatefulOutputPin,
@@ -210,6 +226,7 @@ where
 }
 
 /// Represents a single motor (either motor A or motor B) hooked up to a TB6612FNG controller.
+///
 /// This is unaware of the standby pin. If you plan on using both motors and the standby feature then use the [`Tb6612fng`] struct instead.
 /// See the crate-level comment for further details on when to use what.
 #[derive(Debug)]
@@ -231,7 +248,11 @@ where
     /// This also automatically enables the PWM pin.
     /// The initial state of the motor will be set to [stopped](DriveCommand::Stop).
     ///
-    /// Usage example:
+    /// # Errors
+    /// If any of the underlying pin interactions fail these errors will be propagated up.
+    /// The errors are specific to your HAL.
+    ///
+    /// # Usage example
     /// ```
     /// # use embedded_hal_mock::eh1::digital::Mock as PinMock;
     /// # use embedded_hal_mock::eh1::pwm::Mock as PwmMock;
@@ -275,6 +296,13 @@ where
     }
 
     /// Drive with the defined speed (or brake or stop the motor).
+    ///
+    /// # Errors
+    /// If the underlying pin interaction fails this error will be propagated up.
+    /// The error is specific to your HAL.
+    ///
+    /// The specified speed must be between 0 and 100 (inclusive), otherwise you will get a
+    /// [`MotorError::InvalidSpeed`] error.
     #[allow(clippy::type_complexity)]
     pub fn drive(
         &mut self,
@@ -330,7 +358,7 @@ where
     /// Return the current speed of the motor (in percentage). Note that driving forward returns a positive number
     /// while driving backward returns a negative number and both [`DriveCommand::Brake`] and [`DriveCommand::Stop`] return 0.
     ///
-    /// If you need to know in more details what the current status is consider calling [`Motor::current_drive_command`] instead.
+    /// If you need to know in more details what the current status is, consider calling [`Motor::current_drive_command`] instead.
     pub fn current_speed(&self) -> i8 {
         match self.current_drive_command() {
             DriveCommand::Forward(s) => *s as i8,
