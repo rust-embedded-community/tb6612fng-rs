@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- next-header -->
 ## [Unreleased] - ReleaseDate
 ### Added
+
 * Add a `current_standby()` method to check if the driver is currently in standby mode.
 
 ### Changed
@@ -15,9 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   initialisation to the documented defaults.
 * `Motor::new()` and `Driver::new()` methods now also return errors if they fail
   to set their outputs upon initialisation.
-* Breaking: update to `embedded-hal` 1.0
-* Renamed error types to their struct names
-* Renamed `DriveCommand::Backwards` to `DriveCommand::Backward` to match
+* **Breaking**: update to `embedded-hal` 1.0
+* **Breaking**: Renamed error types to their struct names
+* **Breaking**: Renamed `DriveCommand::Backwards` to `DriveCommand::Backward` to match
   `DriveCommand::Forward`
 
 ### Removed

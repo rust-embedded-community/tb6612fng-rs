@@ -29,12 +29,19 @@ A simple example for the STM32F4 microcontrollers is [available](examples/stm32f
 ## Changelog
 For the changelog please see the dedicated [CHANGELOG.md](CHANGELOG.md).
 
-## Roadmap to v1.0.0
-This crate is already stable, however it's based on a release candidate version of [`embedded-hal`](https://github.com/rust-embedded/embedded-hal/),
-making the API unstable (the change from 1.0.0-rc.1 to 1.0.0 of e-h will be breaking from a dependency management point of view).
-
-See [the tracking issue](https://github.com/rust-embedded-community/tb6612fng-rs/issues/4) for the roadmap to v1.0.0.
-
 ## Minimum Supported Rust Version (MSRV)
-This crate is guaranteed to compile on stable Rust 1.62 and up. It *might*
+This crate is guaranteed to compile on stable Rust 1.63 and up. It *might*
 compile with older versions but that may change in any new patch release.
+
+## License
+Licensed under either of
+
+* Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
+* MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
+
+at your option.
+
+## Contribution
+Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
+dual licensed as above, without any additional terms or conditions.
