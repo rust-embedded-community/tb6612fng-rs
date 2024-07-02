@@ -11,7 +11,7 @@
 //! * You plan on using a single motor without the standby feature: use [`Motor`]
 //!
 //! ## Optional features
-//! * `defmt`: you can enable the `defmt` feature to get a `defmt::Format` implementation for all structs & enums in this crate and a `defmt::debug` call for every speed change.
+//! * `defmt-03`: you can enable this feature to get a `defmt::Format` implementation for all structs & enums in this crate and a `defmt::debug` call for every speed change.
 
 #![forbid(unsafe_code)]
 #![deny(warnings)]
@@ -20,14 +20,14 @@
 #![deny(unused)]
 #![no_std]
 
-#[cfg(feature = "defmt")]
+#[cfg(feature = "defmt-03")]
 use defmt::Format;
 use embedded_hal::digital::{OutputPin, StatefulOutputPin};
 use embedded_hal::pwm::SetDutyCycle;
 
 /// Defines errors which can happen when calling [`Motor::drive()`].
 #[derive(PartialEq, Eq, Debug, Copy, Clone)]
-#[cfg_attr(feature = "defmt", derive(Format))]
+#[cfg_attr(feature = "defmt-03", derive(Format))]
 pub enum MotorError<IN1Error, IN2Error, PWMError> {
     /// An invalid speed has been defined. The speed must be given as a percentage value between 0 and 100 to be valid.
     InvalidSpeed,
@@ -41,7 +41,7 @@ pub enum MotorError<IN1Error, IN2Error, PWMError> {
 
 /// Defines errors which can happen when calling [`Tb6612fng::new()`].
 #[derive(PartialEq, Eq, Debug, Copy, Clone)]
-#[cfg_attr(feature = "defmt", derive(Format))]
+#[cfg_attr(feature = "defmt-03", derive(Format))]
 pub enum Tb6612fngError<
     MAIN1Error,
     MAIN2Error,
@@ -61,7 +61,7 @@ pub enum Tb6612fngError<
 
 /// Defines the possible drive commands.
 #[derive(PartialEq, Eq, Debug, Copy, Clone)]
-#[cfg_attr(feature = "defmt", derive(Format))]
+#[cfg_attr(feature = "defmt-03", derive(Format))]
 pub enum DriveCommand {
     /// Drive forward with the defined speed (in percentage)
     Forward(u8),
@@ -78,7 +78,7 @@ pub enum DriveCommand {
 /// Use the [`Motor`] struct directly if you only have one motor.
 /// See the crate-level comment for further details on when to use what.
 #[derive(Debug)]
-#[cfg_attr(feature = "defmt", derive(Format))]
+#[cfg_attr(feature = "defmt-03", derive(Format))]
 pub struct Tb6612fng<MAIN1, MAIN2, MAPWM, MBIN1, MBIN2, MBPWM, STBY> {
     /// The first motor, labelled as 'A' on the chip
     pub motor_a: Motor<MAIN1, MAIN2, MAPWM>,
@@ -213,7 +213,7 @@ where
 /// This is unaware of the standby pin. If you plan on using both motors and the standby feature then use the [`Tb6612fng`] struct instead.
 /// See the crate-level comment for further details on when to use what.
 #[derive(Debug)]
-#[cfg_attr(feature = "defmt", derive(Format))]
+#[cfg_attr(feature = "defmt-03", derive(Format))]
 pub struct Motor<IN1, IN2, PWM> {
     in1: IN1,
     in2: IN2,
@@ -308,7 +308,7 @@ where
             }
         }
 
-        #[cfg(feature = "defmt")]
+        #[cfg(feature = "defmt-03")]
         defmt::debug!("driving {} with speed {}", drive_command, speed);
 
         self.pwm
