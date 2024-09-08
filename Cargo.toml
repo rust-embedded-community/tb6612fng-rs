@@ -20,4 +20,4 @@ embedded-hal = "1.0"
 defmt = { version = "0.3", optional = true }
 
 [dev-dependencies]
-embedded-hal-mock = "0.11"
+embedded-hal-mock = { version = "0.11", default-features = false, features = ["eh1"] }
