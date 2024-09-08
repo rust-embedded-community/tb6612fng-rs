@@ -42,19 +42,7 @@ pub enum MotorError<IN1Error, IN2Error, PWMError> {
 /// Defines errors which can happen when calling [`Tb6612fng::new()`].
 #[derive(PartialEq, Eq, Debug, Copy, Clone)]
 #[cfg_attr(feature = "defmt-03", derive(Format))]
-pub enum Tb6612fngError<
-    MAIN1Error,
-    MAIN2Error,
-    MAPWMError,
-    MBIN1Error,
-    MBIN2Error,
-    MBPWMError,
-    STBYError,
-> {
-    /// An error in setting the initial `drive()` of `motor_a`
-    MotorA(MotorError<MAIN1Error, MAIN2Error, MAPWMError>),
-    /// An error in setting the initial `drive()` of `motor_b`
-    MotorB(MotorError<MBIN1Error, MBIN2Error, MBPWMError>),
+pub enum Tb6612fngError<STBYError> {
     /// An error in setting the initial output of the standby pin
     Standby(STBYError),
 }
@@ -133,15 +121,11 @@ where
     /// # let standby = PinMock::new(&[PinTransaction::set(High)]);
     /// # let mut standby_ = standby.clone();
     ///
-    /// use tb6612fng::Tb6612fng;
+    /// use tb6612fng::{Motor, Tb6612fng};
     ///
     /// let controller = Tb6612fng::new(
-    ///     motor_a_in1,
-    ///     motor_a_in2,
-    ///     motor_a_pwm,
-    ///     motor_b_in1,
-    ///     motor_b_in2,
-    ///     motor_b_pwm,
+    ///     Motor::new(motor_a_in1, motor_a_in2, motor_a_pwm).unwrap(),
+    ///     Motor::new(motor_b_in1, motor_b_in2, motor_b_pwm).unwrap(),
     ///     standby,
     /// );
     ///
@@ -155,30 +139,16 @@ where
     /// ```
     #[allow(clippy::type_complexity)]
     pub fn new(
-        motor_a_in1: MAIN1,
-        motor_a_in2: MAIN2,
-        motor_a_pwm: MAPWM,
-        motor_b_in1: MBIN1,
-        motor_b_in2: MBIN2,
-        motor_b_pwm: MBPWM,
+        motor_a: Motor<MAIN1, MAIN2, MAPWM>,
+        motor_b: Motor<MBIN1, MBIN2, MBPWM>,
         standby: STBY,
     ) -> Result<
         Tb6612fng<MAIN1, MAIN2, MAPWM, MBIN1, MBIN2, MBPWM, STBY>,
-        Tb6612fngError<
-            MAIN1::Error,
-            MAIN2::Error,
-            MAPWM::Error,
-            MBIN1::Error,
-            MBIN2::Error,
-            MBPWM::Error,
-            STBY::Error,
-        >,
+        Tb6612fngError<STBY::Error>,
     > {
         let mut controller = Tb6612fng {
-            motor_a: Motor::new(motor_a_in1, motor_a_in2, motor_a_pwm)
-                .map_err(Tb6612fngError::MotorA)?,
-            motor_b: Motor::new(motor_b_in1, motor_b_in2, motor_b_pwm)
-                .map_err(Tb6612fngError::MotorB)?,
+            motor_a,
+            motor_b,
             standby,
         };
 
