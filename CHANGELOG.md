@@ -26,6 +26,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Removed the `drive_forward`, `drive_backward`, `stop` and `brake`
   functions as they are duplicates to the `drive` function with the
   different enum variants and make the API surface larger
+* Removed the `defmt` feature: it was only used for debugging and since the `enum`s & `struct`s implement `Debug`
+  consuming code can use `defmt::Debug2Format` when needed. The single `defmt::debug!` statement in `Motor::drive` was
+  not very helpful anyway if two motors were connected
 
 ## [0.2.0] - 2023-11-28
 

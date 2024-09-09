@@ -12,7 +12,6 @@ license = "MIT OR Apache-2.0"
 authors = ["Ralph Ursprung <ralph.ursprung@gmail.com>", "ripytide <james.forsterer@gmail.com>"]
 
 [features]
-defmt-03 = ["dep:defmt"]
 
 [dependencies]
 embedded-hal = "1.0"
