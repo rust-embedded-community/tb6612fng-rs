@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 * Add a `current_standby()` method to check if the driver is currently in standby mode.
+* `MotorError` and `Tb6612fngError` now implement `core::error::Error` (newly stabilised in Rust 1.81)
 
 ### Changed
 
@@ -20,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * **Breaking**: Renamed error types to their struct names
 * **Breaking**: Renamed `DriveCommand::Backwards` to `DriveCommand::Backward` to match
   `DriveCommand::Forward`
+* The MSRV has been updated to 1.81.0 due to `core::error::Error` being implemented
 
 ### Removed
 

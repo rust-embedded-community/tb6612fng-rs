@@ -2,7 +2,7 @@
 name = "tb6612fng"
 version = "0.2.0"
 edition = "2021"
-rust-version = "1.63"
+rust-version = "1.81"
 
 description = "A `no_std` driver for the TB6612FNG motor driver."
 repository = "https://github.com/rust-embedded-community/tb6612fng-rs"

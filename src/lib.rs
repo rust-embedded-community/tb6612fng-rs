@@ -17,6 +17,8 @@
 #![deny(unused)]
 #![no_std]
 
+use core::error::Error;
+use core::fmt::{Debug, Formatter};
 use embedded_hal::digital::{OutputPin, StatefulOutputPin};
 use embedded_hal::pwm::SetDutyCycle;
 
@@ -33,11 +35,60 @@ pub enum MotorError<IN1Error, IN2Error, PWMError> {
     PwmError(PWMError),
 }
 
+impl<IN1Error: Debug, IN2Error: Debug, PWMError: Debug> core::fmt::Display
+    for MotorError<IN1Error, IN2Error, PWMError>
+{
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+        use MotorError::*;
+        match self {
+            InvalidSpeed => write!(f, "an invalid speed has been specified"),
+            In1Error(_) => write!(f, "failed to set the output of the IN1 pin"),
+            In2Error(_) => write!(f, "failed to set the output of the IN2 pin"),
+            PwmError(_) => write!(f, "failed to set the output of the PWM pin"),
+        }
+    }
+}
+
+impl<
+        IN1Error: Debug + Error + 'static,
+        IN2Error: Debug + Error + 'static,
+        PWMError: Debug + Error + 'static,
+    > Error for MotorError<IN1Error, IN2Error, PWMError>
+{
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        use MotorError::*;
+        match self {
+            InvalidSpeed => None,
+            In1Error(e) => Some(e),
+            In2Error(e) => Some(e),
+            PwmError(e) => Some(e),
+        }
+    }
+}
+
 /// Defines errors which can happen when calling [`Tb6612fng::new()`].
 #[derive(PartialEq, Eq, Debug, Copy, Clone)]
 pub enum Tb6612fngError<STBYError> {
     /// An error in setting the initial output of the standby pin
     Standby(STBYError),
+}
+
+impl<STBYError: Debug> core::fmt::Display for Tb6612fngError<STBYError> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+        use Tb6612fngError::*;
+        match self {
+            Standby(_) => write!(f, "failed to set the output of the standby pin"),
+        }
+    }
+}
+
+impl<STBYError: Debug + Error + 'static> Error for Tb6612fngError<STBYError> {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        use Tb6612fngError::*;
+        match self {
+            Standby(e) => Some(e),
+        }
+    }
 }
 
 /// Defines the possible drive commands.
@@ -89,6 +140,8 @@ where
     ///
     /// # Usage example
     /// ```
+    ///
+    /// # fn main() -> Result<(), Box<dyn core::error::Error>> {
     /// # use embedded_hal_mock::eh1::digital::Mock as PinMock;
     /// # use embedded_hal_mock::eh1::pwm::Mock as PwmMock;
     /// # use embedded_hal_mock::eh1::pwm::Transaction as PwmTransaction;
@@ -113,10 +166,9 @@ where
     /// # let mut standby_ = standby.clone();
     ///
     /// use tb6612fng::{Motor, Tb6612fng};
-    ///
     /// let controller = Tb6612fng::new(
-    ///     Motor::new(motor_a_in1, motor_a_in2, motor_a_pwm).unwrap(),
-    ///     Motor::new(motor_b_in1, motor_b_in2, motor_b_pwm).unwrap(),
+    ///     Motor::new(motor_a_in1, motor_a_in2, motor_a_pwm)?,
+    ///     Motor::new(motor_b_in1, motor_b_in2, motor_b_pwm)?,
     ///     standby,
     /// );
     ///
@@ -127,6 +179,8 @@ where
     /// # motor_b_in2_.done();
     /// # motor_b_pwm_.done();
     /// # standby_.done();
+    /// # Ok(())
+    /// # }
     /// ```
     #[allow(clippy::type_complexity)]
     pub fn new(
