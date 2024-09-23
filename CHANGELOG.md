@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- next-header -->
 ## [Unreleased] - ReleaseDate
+
+## [1.0.0] - 2024-09-23
 ### Added
 
 * Add a `current_standby()` method to check if the driver is currently in standby mode.
@@ -43,5 +45,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   If your HAL does not yet implement this, then please use the previous release of the library.
 
 <!-- next-url -->
-[Unreleased]: https://github.com/rust-embedded-community/tb6612fng-rs/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/rust-embedded-community/tb6612fng-rs/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/rust-embedded-community/tb6612fng-rs/compare/v0.2.0...v1.0.0
 [0.2.0]: https://github.com/rust-embedded-community/tb6612fng-rs/compare/v0.1.1...v0.2.0
