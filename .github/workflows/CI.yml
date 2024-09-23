@@ -13,11 +13,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        rust: [1.63.0, stable]
-        features: ['', '--all-features']
-        exclude:
-          - rust: 1.63.0
-            features: '--all-features'
+        rust: [1.81.0, stable]
+        features: ['']
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -95,3 +92,20 @@ jobs:
         with:
           sarif_file: rust-clippy-results.sarif
           wait-for-processing: true
+
+  # simplify GH settings: have one single build to be required
+  build-results:
+    name: Final Results
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    needs: [lib, stm32f4-single-motor-example, clippy]
+    steps:
+      - name: check for failed builds of the library
+        if: ${{ needs.lib.result != 'success' }}
+        run: exit 1
+      - name: check for failed builds of the example
+        if: ${{ needs.stm32f4-single-motor-example.result != 'success' }}
+        run: exit 1
+      - name: check for failed clippy builds
+        if: ${{ needs.clippy.result != 'success' }}
+        run: exit 1

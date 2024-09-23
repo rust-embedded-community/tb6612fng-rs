@@ -1,14 +1,17 @@
 [package]
 name = "tb6612fng"
-version = "0.2.0"
+version = "1.0.0"
 edition = "2021"
-rust-version = "1.63"
+rust-version = "1.81"
 
 description = "A `no_std` driver for the TB6612FNG motor driver."
 repository = "https://github.com/rust-embedded-community/tb6612fng-rs"
 categories = ["embedded", "hardware-support", "no-std", "no-std::no-alloc"]
 keywords = ["tb6612fng", "driver", "motor", "controller", "embedded-hal-driver"]
 license = "MIT OR Apache-2.0"
+authors = ["Ralph Ursprung <ralph.ursprung@gmail.com>", "ripytide <james.forsterer@gmail.com>"]
+
+[features]
 
 [dependencies]
 embedded-hal = "1.0"
@@ -16,4 +19,4 @@ embedded-hal = "1.0"
 defmt = { version = "0.3", optional = true }
 
 [dev-dependencies]
-embedded-hal-mock = "0.11"
+embedded-hal-mock = { version = "0.11", default-features = false, features = ["eh1"] }

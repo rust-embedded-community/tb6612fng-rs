@@ -9,9 +9,6 @@
 //! * You plan on using both motors without the standby feature: use two separate [`Motor`]s
 //! * You plan on using a single motor with the standby feature: use [`Motor`] and control the standby pin manually
 //! * You plan on using a single motor without the standby feature: use [`Motor`]
-//!
-//! ## Optional features
-//! * `defmt`: you can enable the `defmt` feature to get a `defmt::Format` implementation for all structs & enums in this crate and a `defmt::debug` call for every speed change.
 
 #![forbid(unsafe_code)]
 #![deny(warnings)]
@@ -20,14 +17,13 @@
 #![deny(unused)]
 #![no_std]
 
-#[cfg(feature = "defmt")]
-use defmt::Format;
+use core::error::Error;
+use core::fmt::{Debug, Formatter};
 use embedded_hal::digital::{OutputPin, StatefulOutputPin};
 use embedded_hal::pwm::SetDutyCycle;
 
 /// Defines errors which can happen when calling [`Motor::drive()`].
 #[derive(PartialEq, Eq, Debug, Copy, Clone)]
-#[cfg_attr(feature = "defmt", derive(Format))]
 pub enum MotorError<IN1Error, IN2Error, PWMError> {
     /// An invalid speed has been defined. The speed must be given as a percentage value between 0 and 100 to be valid.
     InvalidSpeed,
@@ -39,29 +35,64 @@ pub enum MotorError<IN1Error, IN2Error, PWMError> {
     PwmError(PWMError),
 }
 
+impl<IN1Error: Debug, IN2Error: Debug, PWMError: Debug> core::fmt::Display
+    for MotorError<IN1Error, IN2Error, PWMError>
+{
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+        use MotorError::*;
+        match self {
+            InvalidSpeed => write!(f, "an invalid speed has been specified"),
+            In1Error(_) => write!(f, "failed to set the output of the IN1 pin"),
+            In2Error(_) => write!(f, "failed to set the output of the IN2 pin"),
+            PwmError(_) => write!(f, "failed to set the output of the PWM pin"),
+        }
+    }
+}
+
+impl<
+        IN1Error: Debug + Error + 'static,
+        IN2Error: Debug + Error + 'static,
+        PWMError: Debug + Error + 'static,
+    > Error for MotorError<IN1Error, IN2Error, PWMError>
+{
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        use MotorError::*;
+        match self {
+            InvalidSpeed => None,
+            In1Error(e) => Some(e),
+            In2Error(e) => Some(e),
+            PwmError(e) => Some(e),
+        }
+    }
+}
+
 /// Defines errors which can happen when calling [`Tb6612fng::new()`].
 #[derive(PartialEq, Eq, Debug, Copy, Clone)]
-#[cfg_attr(feature = "defmt", derive(Format))]
-pub enum Tb6612fngError<
-    MAIN1Error,
-    MAIN2Error,
-    MAPWMError,
-    MBIN1Error,
-    MBIN2Error,
-    MBPWMError,
-    STBYError,
-> {
-    /// An error in setting the initial `drive()` of `motor_a`
-    MotorA(MotorError<MAIN1Error, MAIN2Error, MAPWMError>),
-    /// An error in setting the initial `drive()` of `motor_b`
-    MotorB(MotorError<MBIN1Error, MBIN2Error, MBPWMError>),
+pub enum Tb6612fngError<STBYError> {
     /// An error in setting the initial output of the standby pin
     Standby(STBYError),
 }
 
+impl<STBYError: Debug> core::fmt::Display for Tb6612fngError<STBYError> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+        use Tb6612fngError::*;
+        match self {
+            Standby(_) => write!(f, "failed to set the output of the standby pin"),
+        }
+    }
+}
+
+impl<STBYError: Debug + Error + 'static> Error for Tb6612fngError<STBYError> {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        use Tb6612fngError::*;
+        match self {
+            Standby(e) => Some(e),
+        }
+    }
+}
+
 /// Defines the possible drive commands.
 #[derive(PartialEq, Eq, Debug, Copy, Clone)]
-#[cfg_attr(feature = "defmt", derive(Format))]
 pub enum DriveCommand {
     /// Drive forward with the defined speed (in percentage)
     Forward(u8),
@@ -78,7 +109,6 @@ pub enum DriveCommand {
 /// Use the [`Motor`] struct directly if you only have one motor.
 /// See the crate-level comment for further details on when to use what.
 #[derive(Debug)]
-#[cfg_attr(feature = "defmt", derive(Format))]
 pub struct Tb6612fng<MAIN1, MAIN2, MAPWM, MBIN1, MBIN2, MBPWM, STBY> {
     /// The first motor, labelled as 'A' on the chip
     pub motor_a: Motor<MAIN1, MAIN2, MAPWM>,
@@ -104,8 +134,14 @@ where
     /// The initial state of the motors will be set to [stopped](DriveCommand::Stop).
     /// The initial state of standby will be *disabled*.
     ///
-    /// Usage example:
+    /// # Errors
+    /// If any of the underlying pin interactions fail these errors will be propagated up.
+    /// The errors are specific to your HAL.
+    ///
+    /// # Usage example
     /// ```
+    ///
+    /// # fn main() -> Result<(), Box<dyn core::error::Error>> {
     /// # use embedded_hal_mock::eh1::digital::Mock as PinMock;
     /// # use embedded_hal_mock::eh1::pwm::Mock as PwmMock;
     /// # use embedded_hal_mock::eh1::pwm::Transaction as PwmTransaction;
@@ -129,15 +165,10 @@ where
     /// # let standby = PinMock::new(&[PinTransaction::set(High)]);
     /// # let mut standby_ = standby.clone();
     ///
-    /// use tb6612fng::Tb6612fng;
-    ///
+    /// use tb6612fng::{Motor, Tb6612fng};
     /// let controller = Tb6612fng::new(
-    ///     motor_a_in1,
-    ///     motor_a_in2,
-    ///     motor_a_pwm,
-    ///     motor_b_in1,
-    ///     motor_b_in2,
-    ///     motor_b_pwm,
+    ///     Motor::new(motor_a_in1, motor_a_in2, motor_a_pwm)?,
+    ///     Motor::new(motor_b_in1, motor_b_in2, motor_b_pwm)?,
     ///     standby,
     /// );
     ///
@@ -148,33 +179,21 @@ where
     /// # motor_b_in2_.done();
     /// # motor_b_pwm_.done();
     /// # standby_.done();
+    /// # Ok(())
+    /// # }
     /// ```
     #[allow(clippy::type_complexity)]
     pub fn new(
-        motor_a_in1: MAIN1,
-        motor_a_in2: MAIN2,
-        motor_a_pwm: MAPWM,
-        motor_b_in1: MBIN1,
-        motor_b_in2: MBIN2,
-        motor_b_pwm: MBPWM,
+        motor_a: Motor<MAIN1, MAIN2, MAPWM>,
+        motor_b: Motor<MBIN1, MBIN2, MBPWM>,
         standby: STBY,
     ) -> Result<
         Tb6612fng<MAIN1, MAIN2, MAPWM, MBIN1, MBIN2, MBPWM, STBY>,
-        Tb6612fngError<
-            MAIN1::Error,
-            MAIN2::Error,
-            MAPWM::Error,
-            MBIN1::Error,
-            MBIN2::Error,
-            MBPWM::Error,
-            STBY::Error,
-        >,
+        Tb6612fngError<STBY::Error>,
     > {
         let mut controller = Tb6612fng {
-            motor_a: Motor::new(motor_a_in1, motor_a_in2, motor_a_pwm)
-                .map_err(Tb6612fngError::MotorA)?,
-            motor_b: Motor::new(motor_b_in1, motor_b_in2, motor_b_pwm)
-                .map_err(Tb6612fngError::MotorB)?,
+            motor_a,
+            motor_b,
             standby,
         };
 
@@ -189,11 +208,19 @@ where
     ///
     /// Note that this does not change any commands on the motors, i.e. the PWM signal will continue
     /// and once [`Tb6612fng::disable_standby`] is called the motor will pick up where it left off (unless the command was changed in-between).
+    ///
+    /// # Errors
+    /// If the underlying pin interaction fails this error will be propagated up.
+    /// The error is specific to your HAL.
     pub fn enable_standby(&mut self) -> Result<(), STBY::Error> {
         self.standby.set_low()
     }
 
     /// Disable standby. Note that the last active commands on the motors will resume.
+    ///
+    /// # Errors
+    /// If the underlying pin interaction fails this error will be propagated up.
+    /// The error is specific to your HAL.
     pub fn disable_standby(&mut self) -> Result<(), STBY::Error> {
         self.standby.set_high()
     }
@@ -201,6 +228,10 @@ where
     /// Returns whether the standby mode is enabled.
     ///
     /// *NOTE* this does *not* read the electrical state of the pin, see [`StatefulOutputPin`]
+    ///
+    /// # Errors
+    /// If the underlying pin interaction fails this error will be propagated up.
+    /// The error is specific to your HAL.
     pub fn current_standby(&mut self) -> Result<bool, STBY::Error>
     where
         STBY: StatefulOutputPin,
@@ -210,10 +241,10 @@ where
 }
 
 /// Represents a single motor (either motor A or motor B) hooked up to a TB6612FNG controller.
+///
 /// This is unaware of the standby pin. If you plan on using both motors and the standby feature then use the [`Tb6612fng`] struct instead.
 /// See the crate-level comment for further details on when to use what.
 #[derive(Debug)]
-#[cfg_attr(feature = "defmt", derive(Format))]
 pub struct Motor<IN1, IN2, PWM> {
     in1: IN1,
     in2: IN2,
@@ -231,7 +262,11 @@ where
     /// This also automatically enables the PWM pin.
     /// The initial state of the motor will be set to [stopped](DriveCommand::Stop).
     ///
-    /// Usage example:
+    /// # Errors
+    /// If any of the underlying pin interactions fail these errors will be propagated up.
+    /// The errors are specific to your HAL.
+    ///
+    /// # Usage example
     /// ```
     /// # use embedded_hal_mock::eh1::digital::Mock as PinMock;
     /// # use embedded_hal_mock::eh1::pwm::Mock as PwmMock;
@@ -275,6 +310,13 @@ where
     }
 
     /// Drive with the defined speed (or brake or stop the motor).
+    ///
+    /// # Errors
+    /// If the underlying pin interaction fails this error will be propagated up.
+    /// The error is specific to your HAL.
+    ///
+    /// The specified speed must be between 0 and 100 (inclusive), otherwise you will get a
+    /// [`MotorError::InvalidSpeed`] error.
     #[allow(clippy::type_complexity)]
     pub fn drive(
         &mut self,
@@ -308,9 +350,6 @@ where
             }
         }
 
-        #[cfg(feature = "defmt")]
-        defmt::debug!("driving {} with speed {}", drive_command, speed);
-
         self.pwm
             .set_duty_cycle_percent(speed)
             .map_err(MotorError::PwmError)?;
@@ -330,7 +369,7 @@ where
     /// Return the current speed of the motor (in percentage). Note that driving forward returns a positive number
     /// while driving backward returns a negative number and both [`DriveCommand::Brake`] and [`DriveCommand::Stop`] return 0.
     ///
-    /// If you need to know in more details what the current status is consider calling [`Motor::current_drive_command`] instead.
+    /// If you need to know in more details what the current status is, consider calling [`Motor::current_drive_command`] instead.
     pub fn current_speed(&self) -> i8 {
         match self.current_drive_command() {
             DriveCommand::Forward(s) => *s as i8,
