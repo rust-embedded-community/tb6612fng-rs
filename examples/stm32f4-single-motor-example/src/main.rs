@@ -13,7 +13,7 @@ use defmt_rtt as _;
 #[rtic::app(device = stm32f4xx_hal::pac, dispatchers = [EXTI1])]
 mod app {
     use stm32f4xx_hal::gpio::{Edge, Input, Output, PB4, PB5, PC13};
-    use stm32f4xx_hal::timer::{Channel3, MonoTimerUs, PwmChannel};
+    use stm32f4xx_hal::timer::{MonoTimerUs, PwmChannel};
     use stm32f4xx_hal::{pac, pac::TIM2, prelude::*, watchdog::IndependentWatchdog};
     use tb6612fng::{DriveCommand, Motor};
 
@@ -46,11 +46,8 @@ mod app {
         // set up the motor
         let motor_in1 = gpiob.pb5.into_push_pull_output();
         let motor_in2 = gpiob.pb4.into_push_pull_output();
-        let mut motor_pwm = ctx
-            .device
-            .TIM2
-            .pwm_hz(Channel3::new(gpiob.pb10), 100.kHz(), &clocks)
-            .split();
+        let (_, (_, _, motor_pwm, ..)) = ctx.device.TIM2.pwm_hz(100.kHz(), &clocks);
+        let mut motor_pwm = motor_pwm.with(gpiob.pb10);
         motor_pwm.enable();
         let mut motor = Motor::new(motor_in1, motor_in2, motor_pwm).unwrap();
         motor.drive(DriveCommand::Backward(0)).unwrap();
