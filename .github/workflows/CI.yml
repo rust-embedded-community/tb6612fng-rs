@@ -23,6 +23,8 @@ jobs:
         with:
           toolchain: ${{ matrix.rust }}
           components: rustfmt
+      - name: Install required cargo components
+        run: cargo install --locked cargo-audit
       - name: build
         run: cargo build ${{ matrix.features }}
       - name: check
@@ -44,7 +46,7 @@ jobs:
           targets: thumbv7em-none-eabihf
           components: rustfmt clippy
       - name: Install required cargo components
-        run: cargo install clippy-sarif sarif-fmt flip-link
+        run: cargo install --locked cargo-audit clippy-sarif sarif-fmt flip-link
       - name: build
         run: cargo build
         working-directory: examples/stm32f4-single-motor-example
