@@ -100,14 +100,13 @@ jobs:
     name: Final Results
     if: ${{ always() }}
     runs-on: ubuntu-latest
-    needs: [lib, stm32f4-single-motor-example, clippy]
+    needs:
+      - lib
+      - stm32f4-single-motor-example
+      - clippy
     steps:
-      - name: check for failed builds of the library
-        if: ${{ needs.lib.result != 'success' }}
-        run: exit 1
-      - name: check for failed builds of the example
-        if: ${{ needs.stm32f4-single-motor-example.result != 'success' }}
-        run: exit 1
-      - name: check for failed clippy builds
-        if: ${{ needs.clippy.result != 'success' }}
-        run: exit 1
+      - name: "check for failed builds"
+        run: |
+          cat <<EOF | jq -e 'unique | all(. == "success")'
+          ${{ toJson(needs.*.result) }}
+          EOF
