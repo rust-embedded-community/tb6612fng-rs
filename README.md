@@ -20,6 +20,9 @@ See the documentation for usage examples.
 * You plan on using a single motor with the standby feature: use `Motor` and control the standby pin manually
 * You plan on using a single motor without the standby feature: use `Motor`
 
+## Optional features
+* `defmt`: you can enable this feature to get a `defmt::Format` implementation for all structs & enums in this crate and a `defmt::trace` call for every speed change.
+
 ## Examples
 A simple example for the STM32F4 microcontrollers is [available](examples/stm32f4-single-motor-example/README.md).
 
