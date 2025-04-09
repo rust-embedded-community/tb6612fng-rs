@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- next-header -->
 ## [Unreleased] - ReleaseDate
 
+### Added
+
+* Re-introduced usage of `defmt` (the dependency was still present, only its usage and the `defmt-03` feature were
+ removed before the previous release)
+
+### Changed
+
+* Updated to `defmt` 1.0 (non-breaking change, backwards compatible with 0.3 through semver trick)
+
 ## [1.0.0] - 2024-09-23
 ### Added
 
