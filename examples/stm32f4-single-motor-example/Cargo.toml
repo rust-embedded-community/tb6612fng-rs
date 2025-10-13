@@ -12,7 +12,7 @@ panic-probe = { version = "1.0", features = ["print-defmt"] }
 stm32f4xx-hal = { version = "0.22", features = ["stm32f401", "rtic1"] }
 
 defmt = "1.0"
-defmt-rtt = "1.0"
+defmt-rtt = "1.1"
 
 # use `tb6612fng = "0.1"` in reality; path used here to ensure that the example always compiles against the latest master
 tb6612fng = { path = "../.." }
