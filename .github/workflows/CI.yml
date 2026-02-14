@@ -17,14 +17,15 @@ jobs:
         features: ['', '--all-features']
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: install rust toolchain
         uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.rust }}
           components: rustfmt
+      - uses: cargo-bins/cargo-binstall@main
       - name: Install required cargo components
-        run: cargo install --locked cargo-audit
+        run: cargo binstall cargo-audit
       - name: build
         run: cargo build ${{ matrix.features }}
       - name: check
@@ -39,7 +40,7 @@ jobs:
   stm32f4-single-motor-example:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: install rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -79,7 +80,7 @@ jobs:
   clippy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: install rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
