@@ -23,8 +23,9 @@ jobs:
         with:
           toolchain: ${{ matrix.rust }}
           components: rustfmt
+      - uses: cargo-bins/cargo-binstall@main
       - name: Install required cargo components
-        run: cargo install --locked cargo-audit
+        run: cargo binstall cargo-audit
       - name: build
         run: cargo build ${{ matrix.features }}
       - name: check
