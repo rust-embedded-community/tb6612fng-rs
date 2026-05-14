@@ -14,7 +14,7 @@ use defmt_rtt as _;
 mod app {
     use stm32f4xx_hal::gpio::{Edge, Input, Output, PB4, PB5, PC13};
     use stm32f4xx_hal::timer::{MonoTimerUs, PwmChannel};
-    use stm32f4xx_hal::{pac, pac::TIM2, prelude::*, watchdog::IndependentWatchdog};
+    use stm32f4xx_hal::{pac, pac::TIM2, prelude::*, rcc::Config, watchdog::IndependentWatchdog};
     use tb6612fng::{DriveCommand, Motor};
 
     #[monotonic(binds = TIM5, default = true)]
@@ -34,19 +34,18 @@ mod app {
 
     #[init]
     fn init(mut ctx: init::Context) -> (Shared, Local, init::Monotonics) {
-        let mut syscfg = ctx.device.SYSCFG.constrain();
+        let mut rcc = ctx.device.RCC.freeze(Config::DEFAULT.sysclk(84.MHz()));
 
-        let rcc = ctx.device.RCC.constrain();
-        let clocks = rcc.cfgr.sysclk(84.MHz()).freeze();
-        let mono = ctx.device.TIM5.monotonic_us(&clocks);
+        let mut syscfg = ctx.device.SYSCFG.constrain(&mut rcc);
+        let mono = ctx.device.TIM5.monotonic_us(&mut rcc);
 
-        let gpiob = ctx.device.GPIOB.split();
-        let gpioc = ctx.device.GPIOC.split();
+        let gpiob = ctx.device.GPIOB.split(&mut rcc);
+        let gpioc = ctx.device.GPIOC.split(&mut rcc);
 
         // set up the motor
         let motor_in1 = gpiob.pb5.into_push_pull_output();
         let motor_in2 = gpiob.pb4.into_push_pull_output();
-        let (_, (_, _, motor_pwm, ..)) = ctx.device.TIM2.pwm_hz(100.kHz(), &clocks);
+        let (_, (_, _, motor_pwm, ..)) = ctx.device.TIM2.pwm_hz(100.kHz(), &mut rcc);
         let mut motor_pwm = motor_pwm.with(gpiob.pb10);
         motor_pwm.enable();
         let mut motor = Motor::new(motor_in1, motor_in2, motor_pwm).unwrap();
